@@ -1,0 +1,37 @@
+[package]
+name = "commons"
+version = "0.0.1"
+edition = "2021"
+authors = ["Sebastien Rousseau <sebastian.rousseau@gmail.com>"]
+description = "Shared Rust utilities and common patterns for the ecosystem"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/sebastienrousseau/commons"
+documentation = "https://docs.rs/commons"
+readme = "README.md"
+keywords = ["utilities", "common", "ecosystem", "library"]
+categories = ["development-tools", "rust-patterns"]
+
+[features]
+default = ["full"]
+full = ["config", "error", "logging", "time", "collections", "validation", "retry", "id", "env"]
+config = ["serde", "toml"]
+error = ["thiserror"]
+logging = []
+time = []
+collections = []
+validation = []
+retry = []
+id = []
+env = []
+
+[dependencies]
+thiserror = { version = "1.0", optional = true }
+serde = { version = "1.0", features = ["derive"], optional = true }
+toml = { version = "0.8", optional = true }
+
+[dev-dependencies]
+tempfile = "3.10"
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
