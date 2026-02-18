@@ -46,24 +46,24 @@ pub fn format_duration(duration: Duration) -> String {
 pub fn parse_duration(s: &str) -> Result<Duration, String> {
     let s = s.trim();
 
-    if s.ends_with("ms") {
-        let num: u64 = s[..s.len()-2].parse()
+    if let Some(num_str) = s.strip_suffix("ms") {
+        let num: u64 = num_str.parse()
             .map_err(|_| "Invalid milliseconds format")?;
         Ok(Duration::from_millis(num))
-    } else if s.ends_with('s') {
-        let num: f64 = s[..s.len()-1].parse()
+    } else if let Some(num_str) = s.strip_suffix('s') {
+        let num: f64 = num_str.parse()
             .map_err(|_| "Invalid seconds format")?;
         Ok(Duration::from_secs_f64(num))
-    } else if s.ends_with('m') {
-        let num: u64 = s[..s.len()-1].parse()
+    } else if let Some(num_str) = s.strip_suffix('m') {
+        let num: u64 = num_str.parse()
             .map_err(|_| "Invalid minutes format")?;
         Ok(Duration::from_secs(num * 60))
-    } else if s.ends_with('h') {
-        let num: u64 = s[..s.len()-1].parse()
+    } else if let Some(num_str) = s.strip_suffix('h') {
+        let num: u64 = num_str.parse()
             .map_err(|_| "Invalid hours format")?;
         Ok(Duration::from_secs(num * 3600))
-    } else if s.ends_with('d') {
-        let num: u64 = s[..s.len()-1].parse()
+    } else if let Some(num_str) = s.strip_suffix('d') {
+        let num: u64 = num_str.parse()
             .map_err(|_| "Invalid days format")?;
         Ok(Duration::from_secs(num * 86400))
     } else {

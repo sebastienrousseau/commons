@@ -15,7 +15,8 @@
 //!     port: u16,
 //! }
 //!
-//! let config: AppConfig = Config::from_file("config.toml").unwrap();
+//! let config = Config::from_file("config.toml").unwrap();
+//! let app_config: AppConfig = config.parse().unwrap();
 //! ```
 
 use serde::de::DeserializeOwned;
@@ -40,13 +41,13 @@ impl Config {
     /// ```rust
     /// use commons::config::Config;
     ///
-    /// let config = Config::from_str(r#"
+    /// let config = Config::new(r#"
     ///     name = "app"
     ///     port = 8080
     /// "#);
     /// ```
     #[must_use]
-    pub fn from_str(content: &str) -> Self {
+    pub fn new(content: &str) -> Self {
         Self {
             content: content.to_string(),
         }
@@ -93,7 +94,7 @@ impl Config {
     ///     name: String,
     /// }
     ///
-    /// let config = Config::from_str("name = \"test\"");
+    /// let config = Config::new("name = \"test\"");
     /// let parsed: MyConfig = config.parse().unwrap();
     /// assert_eq!(parsed.name, "test");
     /// ```
@@ -110,7 +111,7 @@ impl Config {
     /// ```rust
     /// use commons::config::Config;
     ///
-    /// let config = Config::from_str(r#"
+    /// let config = Config::new(r#"
     ///     [server]
     ///     port = 8080
     /// "#);
@@ -254,7 +255,7 @@ mod tests {
 
     #[test]
     fn test_parse_config() {
-        let config = Config::from_str(
+        let config = Config::new(
             r#"
             name = "test"
             port = 8080
@@ -267,7 +268,7 @@ mod tests {
 
     #[test]
     fn test_get_nested_key() {
-        let config = Config::from_str(
+        let config = Config::new(
             r#"
             [server]
             host = "localhost"
