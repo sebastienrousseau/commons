@@ -13,12 +13,16 @@ categories = ["development-tools", "rust-patterns"]
 
 [features]
 default = ["full"]
-full = ["config", "error", "logging", "time", "collections"]
+full = ["config", "error", "logging", "time", "collections", "validation", "retry", "id", "env"]
 config = ["serde", "toml"]
 error = ["thiserror"]
 logging = []
 time = []
 collections = []
+validation = []
+retry = []
+id = []
+env = []
 
 [dependencies]
 thiserror = { version = "1.0", optional = true }

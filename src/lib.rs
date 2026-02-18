@@ -12,6 +12,10 @@
 //! - `logging` - Simple structured logging
 //! - `time` - Date/time utilities and formatting
 //! - `collections` - Extended collection utilities (LRU cache)
+//! - `validation` - Input validation utilities
+//! - `retry` - Retry logic with backoff strategies
+//! - `id` - ID generation (timestamp, random, UUID-like)
+//! - `env` - Environment variable helpers
 //!
 //! ## Quick Start
 //!
@@ -57,6 +61,22 @@ pub mod time;
 #[cfg_attr(docsrs, doc(cfg(feature = "collections")))]
 pub mod collections;
 
+#[cfg(feature = "validation")]
+#[cfg_attr(docsrs, doc(cfg(feature = "validation")))]
+pub mod validation;
+
+#[cfg(feature = "retry")]
+#[cfg_attr(docsrs, doc(cfg(feature = "retry")))]
+pub mod retry;
+
+#[cfg(feature = "id")]
+#[cfg_attr(docsrs, doc(cfg(feature = "id")))]
+pub mod id;
+
+#[cfg(feature = "env")]
+#[cfg_attr(docsrs, doc(cfg(feature = "env")))]
+pub mod env;
+
 /// Prelude module for convenient imports.
 ///
 /// Import everything commonly needed:
@@ -79,6 +99,18 @@ pub mod prelude {
 
     #[cfg(feature = "collections")]
     pub use crate::collections::LruCache;
+
+    #[cfg(feature = "validation")]
+    pub use crate::validation::{is_valid_email, is_valid_url, validate_length, validate_range, Validator};
+
+    #[cfg(feature = "retry")]
+    pub use crate::retry::{retry, RetryConfig, BackoffStrategy};
+
+    #[cfg(feature = "id")]
+    pub use crate::id::{generate_id, generate_prefixed_id, IdFormat, IdGenerator};
+
+    #[cfg(feature = "env")]
+    pub use crate::env::{get_env, get_env_or, require_env, is_production, is_development};
 }
 
 /// Crate version.
