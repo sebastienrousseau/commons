@@ -7,12 +7,12 @@ description = """
     Provides reusable components for error handling, configuration,
     logging, validation, retry logic, and more.
 """
-documentation = "https://docs.rs/commons"
+documentation = "https://docs.rs/euxis-commons"
 edition = "2024"
 homepage = "https://github.com/sebastienrousseau/commons"
-keywords = ["utilities", "common", "ecosystem", "library"]
+keywords = ["utilities", "common", "ecosystem", "euxis"]
 license = "MIT OR Apache-2.0"
-name = "commons"
+name = "euxis-commons"
 readme = "README.md"
 repository = "https://github.com/sebastienrousseau/commons"
 rust-version = "1.88.0"
