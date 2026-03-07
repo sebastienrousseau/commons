@@ -468,4 +468,202 @@ mod tests {
         assert!(result.is_err());
         assert_eq!(result.attempts, 1);
     }
+
+    #[test]
+    fn test_backoff_linear() {
+        let strategy = BackoffStrategy::Linear {
+            initial: Duration::from_millis(100),
+            increment: Duration::from_millis(50),
+            max: Duration::from_millis(300),
+        };
+        assert_eq!(strategy.delay_for_attempt(0), Duration::from_millis(100));
+        assert_eq!(strategy.delay_for_attempt(1), Duration::from_millis(150));
+        assert_eq!(strategy.delay_for_attempt(2), Duration::from_millis(200));
+        // Capped at max
+        assert_eq!(strategy.delay_for_attempt(10), Duration::from_millis(300));
+    }
+
+    #[test]
+    fn test_backoff_strategy_default() {
+        let strategy = BackoffStrategy::default();
+        match strategy {
+            BackoffStrategy::Exponential {
+                initial,
+                max,
+                multiplier,
+            } => {
+                assert_eq!(initial, Duration::from_millis(100));
+                assert_eq!(max, Duration::from_secs(30));
+                assert!((multiplier - 2.0).abs() < f64::EPSILON);
+            }
+            _ => panic!("Default backoff should be Exponential"),
+        }
+    }
+
+    #[test]
+    fn test_retry_config_default() {
+        let config = RetryConfig::default();
+        assert_eq!(config.max_attempts, 3);
+        assert!(config.jitter);
+    }
+
+    #[test]
+    fn test_retry_config_with_constant_delay() {
+        let config = RetryConfig::with_constant_delay(5, Duration::from_millis(200));
+        assert_eq!(config.max_attempts, 5);
+        assert!(!config.jitter);
+        match config.backoff {
+            BackoffStrategy::Constant(d) => assert_eq!(d, Duration::from_millis(200)),
+            _ => panic!("Expected Constant backoff"),
+        }
+    }
+
+    #[test]
+    fn test_retry_config_with_exponential_backoff() {
+        let config = RetryConfig::with_exponential_backoff(
+            4,
+            Duration::from_millis(50),
+            Duration::from_secs(10),
+        );
+        assert_eq!(config.max_attempts, 4);
+        assert!(config.jitter);
+        match config.backoff {
+            BackoffStrategy::Exponential {
+                initial,
+                max,
+                multiplier,
+            } => {
+                assert_eq!(initial, Duration::from_millis(50));
+                assert_eq!(max, Duration::from_secs(10));
+                assert!((multiplier - 2.0).abs() < f64::EPSILON);
+            }
+            _ => panic!("Expected Exponential backoff"),
+        }
+    }
+
+    #[test]
+    fn test_retry_config_jitter_method() {
+        let config = RetryConfig::new().jitter(false);
+        assert!(!config.jitter);
+        let config = config.jitter(true);
+        assert!(config.jitter);
+    }
+
+    #[test]
+    fn test_retry_result_is_ok_and_is_err() {
+        let ok_result: RetryResult<i32, &str> = RetryResult {
+            result: Ok(42),
+            attempts: 1,
+            total_time: Duration::ZERO,
+        };
+        assert!(ok_result.is_ok());
+        assert!(!ok_result.is_err());
+
+        let err_result: RetryResult<i32, &str> = RetryResult {
+            result: Err("fail"),
+            attempts: 3,
+            total_time: Duration::ZERO,
+        };
+        assert!(!err_result.is_ok());
+        assert!(err_result.is_err());
+    }
+
+    #[test]
+    fn test_retry_result_into_result() {
+        let ok_result: RetryResult<i32, &str> = RetryResult {
+            result: Ok(42),
+            attempts: 1,
+            total_time: Duration::ZERO,
+        };
+        assert_eq!(ok_result.into_result(), Ok(42));
+
+        let err_result: RetryResult<i32, &str> = RetryResult {
+            result: Err("fail"),
+            attempts: 3,
+            total_time: Duration::ZERO,
+        };
+        assert_eq!(err_result.into_result(), Err("fail"));
+    }
+
+    #[test]
+    fn test_retry_result_unwrap() {
+        let ok_result: RetryResult<i32, &str> = RetryResult {
+            result: Ok(42),
+            attempts: 1,
+            total_time: Duration::ZERO,
+        };
+        assert_eq!(ok_result.unwrap(), 42);
+    }
+
+    #[test]
+    fn test_retry_with_context_success() {
+        let config = RetryConfig::new()
+            .max_attempts(3)
+            .backoff(BackoffStrategy::None);
+
+        let result = retry_with_context(config, |attempt| {
+            if attempt >= 1 {
+                Ok("done")
+            } else {
+                Err("not yet")
+            }
+        });
+
+        assert!(result.is_ok());
+        assert_eq!(result.attempts, 2);
+        assert_eq!(result.unwrap(), "done");
+    }
+
+    #[test]
+    fn test_retry_with_jitter_and_exponential_backoff() {
+        // Use very small delays so the test finishes quickly, but exercises
+        // the jitter + non-zero delay code path.
+        let attempts = Cell::new(0);
+        let config = RetryConfig::new()
+            .max_attempts(3)
+            .backoff(BackoffStrategy::Exponential {
+                initial: Duration::from_nanos(1),
+                max: Duration::from_nanos(100),
+                multiplier: 2.0,
+            })
+            .jitter(true);
+
+        let result = retry(config, || {
+            let n = attempts.get();
+            attempts.set(n + 1);
+            if n < 2 {
+                Err("retry")
+            } else {
+                Ok("success")
+            }
+        });
+
+        assert!(result.is_ok());
+        assert_eq!(result.attempts, 3);
+    }
+
+    #[test]
+    fn test_max_attempts_clamps_zero_via_builder() {
+        let config = RetryConfig::new().max_attempts(0);
+        assert_eq!(config.max_attempts, 1);
+    }
+
+    #[test]
+    fn test_retry_with_context_uses_backoff() {
+        let attempts = Cell::new(0);
+        let config = RetryConfig::new()
+            .max_attempts(2)
+            .backoff(BackoffStrategy::Constant(Duration::from_millis(1)));
+        let result = retry_with_context(config, |_attempt| {
+            let n = attempts.get();
+            attempts.set(n + 1);
+            if n < 1 {
+                Err("not yet")
+            } else {
+                Ok("ok")
+            }
+        });
+        assert!(result.is_ok());
+        assert_eq!(result.attempts, 2);
+    }
 }

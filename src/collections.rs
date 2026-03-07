@@ -130,4 +130,73 @@ mod tests {
         assert_eq!(cache.get(&2), Some(&"two"));
         assert_eq!(cache.get(&3), Some(&"three"));
     }
+
+    #[test]
+    fn test_peek_existing_key() {
+        let mut cache = LruCache::new(3);
+        cache.insert("a", 1);
+        assert_eq!(cache.peek(&"a"), Some(&1));
+    }
+
+    #[test]
+    fn test_peek_missing_key() {
+        let cache: LruCache<&str, i32> = LruCache::new(3);
+        assert_eq!(cache.peek(&"missing"), None);
+    }
+
+    #[test]
+    fn test_remove_existing_key() {
+        let mut cache = LruCache::new(3);
+        cache.insert("a", 1);
+        let removed = cache.remove(&"a");
+        assert_eq!(removed, Some(1));
+        assert_eq!(cache.len(), 0);
+    }
+
+    #[test]
+    fn test_remove_missing_key() {
+        let mut cache: LruCache<&str, i32> = LruCache::new(3);
+        let removed = cache.remove(&"missing");
+        assert_eq!(removed, None);
+    }
+
+    #[test]
+    fn test_is_empty_on_empty_cache() {
+        let cache: LruCache<i32, i32> = LruCache::new(3);
+        assert!(cache.is_empty());
+    }
+
+    #[test]
+    fn test_is_empty_on_non_empty_cache() {
+        let mut cache = LruCache::new(3);
+        cache.insert(1, "one");
+        assert!(!cache.is_empty());
+    }
+
+    #[test]
+    fn test_clear_populated_cache() {
+        let mut cache = LruCache::new(3);
+        cache.insert(1, "one");
+        cache.insert(2, "two");
+        assert_eq!(cache.len(), 2);
+        cache.clear();
+        assert_eq!(cache.len(), 0);
+        assert!(cache.is_empty());
+    }
+
+    #[test]
+    fn test_insert_returns_old_value() {
+        let mut cache = LruCache::new(3);
+        let first = cache.insert("key", "old");
+        assert_eq!(first, None);
+        let second = cache.insert("key", "new");
+        assert_eq!(second, Some("old"));
+        assert_eq!(cache.get(&"key"), Some(&"new"));
+    }
+
+    #[test]
+    fn test_get_missing_key() {
+        let mut cache: LruCache<&str, i32> = LruCache::new(3);
+        assert_eq!(cache.get(&"missing"), None);
+    }
 }

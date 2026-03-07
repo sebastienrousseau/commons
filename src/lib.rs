@@ -9,7 +9,7 @@
 //!
 //! - `config` - Configuration file loading and management (TOML)
 //! - `error` - Common error types and Result aliases
-//! - `logging` - Simple structured logging
+//! - `logging` - Near-lock-free structured logging engine
 //! - `time` - Date/time utilities and formatting
 //! - `collections` - Extended collection utilities (LRU cache)
 //! - `validation` - Input validation utilities
@@ -34,7 +34,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! commons = { version = "0.0.2", default-features = false, features = ["error", "time"] }
+//! commons = { version = "0.0.3", default-features = false, features = ["error", "time"] }
 //! ```
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
@@ -82,6 +82,19 @@ pub mod env;
 #[cfg_attr(docsrs, doc(cfg(feature = "fs")))]
 pub mod fs;
 
+/// Create a logger for the current module.
+///
+/// Returns a [`logging::Logger`] whose module name is set to the caller's
+/// [`module_path!()`]. This is the recommended way to obtain a logger
+/// without hard-coding module strings.
+#[cfg(feature = "logging")]
+#[macro_export]
+macro_rules! logger {
+    () => {
+        $crate::logging::Logger::new(module_path!())
+    };
+}
+
 /// Prelude module for convenient imports.
 ///
 /// Import everything commonly needed:
@@ -97,7 +110,11 @@ pub mod prelude {
     pub use crate::config::{Config, ConfigBuilder, ConfigError};
 
     #[cfg(feature = "logging")]
-    pub use crate::logging::{LogLevel, Logger};
+    pub use crate::logging::{
+        LogLevel, Logger, LogFormat, Log, LoggingError, LoggingResult,
+        LoggingConfig, LoggingBuilder, FlushGuard,
+        init as logging_init, builder as logging_builder,
+    };
 
     #[cfg(feature = "time")]
     pub use crate::time::{format_duration, parse_duration, unix_timestamp, unix_timestamp_millis};
@@ -138,6 +155,6 @@ mod tests {
 
     #[test]
     fn test_version() {
-        assert_eq!(version(), "0.0.2");
+        assert_eq!(version(), "0.0.3");
     }
 }

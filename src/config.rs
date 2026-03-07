@@ -326,4 +326,100 @@ mod tests {
         assert_eq!(config.get::<i64>("port"), Some(8080));
         assert_eq!(config.get::<bool>("debug"), Some(true));
     }
+
+    #[test]
+    fn test_from_file_nonexistent() {
+        let result = Config::from_file("/tmp/nonexistent_config_file_12345.toml");
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_has_key_true() {
+        let config = Config::new("name = \"test\"");
+        assert!(config.has_key("name"));
+    }
+
+    #[test]
+    fn test_has_key_false() {
+        let config = Config::new("name = \"test\"");
+        assert!(!config.has_key("missing"));
+    }
+
+    #[test]
+    fn test_raw_content() {
+        let toml_str = "name = \"test\"";
+        let config = Config::new(toml_str);
+        assert_eq!(config.raw(), toml_str);
+    }
+
+    #[test]
+    fn test_get_missing_key() {
+        let config = Config::new("port = 8080");
+        assert_eq!(config.get::<String>("missing"), None);
+    }
+
+    #[test]
+    fn test_get_wrong_type() {
+        let config = Config::new("port = 8080");
+        // port is an integer, not a string
+        assert_eq!(config.get::<String>("port"), None);
+    }
+
+    #[test]
+    fn test_from_toml_value_f64() {
+        let config = Config::new("ratio = 2.72");
+        assert_eq!(config.get::<f64>("ratio"), Some(2.72));
+    }
+
+    #[test]
+    fn test_from_toml_value_bool() {
+        let config = Config::new("enabled = true");
+        assert_eq!(config.get::<bool>("enabled"), Some(true));
+    }
+
+    #[test]
+    fn test_config_error_display_file_read() {
+        let err = ConfigError::FileRead("file.toml: not found".into());
+        assert_eq!(
+            err.to_string(),
+            "Failed to read config file: file.toml: not found"
+        );
+    }
+
+    #[test]
+    fn test_config_error_display_parse() {
+        let err = ConfigError::Parse("invalid syntax".into());
+        assert_eq!(
+            err.to_string(),
+            "Failed to parse config: invalid syntax"
+        );
+    }
+
+    #[test]
+    fn test_config_error_display_missing_key() {
+        let err = ConfigError::MissingKey("database.host".into());
+        assert_eq!(
+            err.to_string(),
+            "Missing required config key: database.host"
+        );
+    }
+
+    #[test]
+    fn test_config_new_with_invalid_toml() {
+        // Invalid TOML should create a config with an empty table
+        let config = Config::new("this is not valid toml {{{{");
+        // Should still work — has_key returns false, get returns None
+        assert!(!config.has_key("anything"));
+        assert_eq!(config.get::<String>("anything"), None);
+    }
+
+    #[test]
+    fn test_from_file_success() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("test.toml");
+        std::fs::write(&path, "name = \"test\"\nport = 8080\n").unwrap();
+        let config = Config::from_file(&path).unwrap();
+        assert_eq!(config.get::<String>("name"), Some("test".into()));
+        assert_eq!(config.get::<i64>("port"), Some(8080));
+    }
 }

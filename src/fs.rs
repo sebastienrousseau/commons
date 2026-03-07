@@ -275,4 +275,13 @@ mod tests {
         // Just ensure it doesn't panic; actual value depends on runtime.
         let _ = is_wsl();
     }
+
+    #[test]
+    fn test_resolve_path_tilde_backslash() {
+        // On Unix, `~\subdir` should still expand the tilde since
+        // the guard on line 42 checks for both `/` and `\`.
+        let home = home_dir().unwrap();
+        let result = resolve_path("~\\subdir");
+        assert_eq!(result, home.join("subdir"));
+    }
 }
