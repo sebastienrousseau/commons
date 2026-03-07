@@ -1,0 +1,9 @@
+(function() {
+    const implementors = Object.fromEntries([["commons",[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/core/error/trait.Error.html\" title=\"trait core::error::Error\">Error</a> for <a class=\"enum\" href=\"commons/config/enum.ConfigError.html\" title=\"enum commons::config::ConfigError\">ConfigError</a>",0],["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/core/error/trait.Error.html\" title=\"trait core::error::Error\">Error</a> for <a class=\"enum\" href=\"commons/env/enum.EnvError.html\" title=\"enum commons::env::EnvError\">EnvError</a>",0],["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/core/error/trait.Error.html\" title=\"trait core::error::Error\">Error</a> for <a class=\"enum\" href=\"commons/error/enum.CommonError.html\" title=\"enum commons::error::CommonError\">CommonError</a>",0],["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/core/error/trait.Error.html\" title=\"trait core::error::Error\">Error</a> for <a class=\"enum\" href=\"commons/validation/enum.ValidationError.html\" title=\"enum commons::validation::ValidationError\">ValidationError</a>",0]]]]);
+    if (window.register_implementors) {
+        window.register_implementors(implementors);
+    } else {
+        window.pending_implementors = implementors;
+    }
+})()
+//{"start":59,"fragment_lengths":[1112]}

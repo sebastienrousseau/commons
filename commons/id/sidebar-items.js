@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["IdFormat"],"fn":["current_timestamp_millis","generate_id","generate_prefixed_id","generate_random_hex","generate_short_id","generate_timestamp_id","generate_uuid_like"],"struct":["IdGenerator"]};
