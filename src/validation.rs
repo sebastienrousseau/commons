@@ -21,33 +21,17 @@ pub enum ValidationError {
     /// Value is empty when it shouldn't be.
     Empty,
     /// Value is too short.
-    TooShort {
-        min: usize,
-        actual: usize,
-    },
+    TooShort { min: usize, actual: usize },
     /// Value is too long.
-    TooLong {
-        max: usize,
-        actual: usize,
-    },
+    TooLong { max: usize, actual: usize },
     /// Value is below minimum.
-    BelowMin {
-        min: String,
-        actual: String,
-    },
+    BelowMin { min: String, actual: String },
     /// Value is above maximum.
-    AboveMax {
-        max: String,
-        actual: String,
-    },
+    AboveMax { max: String, actual: String },
     /// Value doesn't match expected pattern.
-    InvalidPattern {
-        pattern: String,
-    },
+    InvalidPattern { pattern: String },
     /// Value is not in allowed set.
-    NotInSet {
-        allowed: Vec<String>,
-    },
+    NotInSet { allowed: Vec<String> },
     /// Custom validation error.
     Custom(String),
 }
@@ -174,7 +158,9 @@ pub fn is_valid_url(url: &str) -> bool {
     }
 
     // Must have something after the protocol
-    let rest = url.strip_prefix("https://").or_else(|| url.strip_prefix("http://"));
+    let rest = url
+        .strip_prefix("https://")
+        .or_else(|| url.strip_prefix("http://"));
     match rest {
         Some(r) => !r.is_empty() && r.contains('.'),
         None => false,

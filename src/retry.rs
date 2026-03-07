@@ -24,7 +24,7 @@ use std::thread;
 use std::time::Duration;
 
 /// Backoff strategy for retries.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum BackoffStrategy {
     /// No delay between retries.
     None,
@@ -96,7 +96,7 @@ impl Default for BackoffStrategy {
 }
 
 /// Configuration for retry behavior.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct RetryConfig {
     /// Maximum number of attempts (including first try).
     pub max_attempts: usize,
@@ -253,9 +253,8 @@ where
                     // Add jitter (0-25% of delay)
                     if config.jitter && delay > Duration::ZERO {
                         let jitter_factor = simple_random() * 0.25;
-                        let jitter = Duration::from_nanos(
-                            (delay.as_nanos() as f64 * jitter_factor) as u64
-                        );
+                        let jitter =
+                            Duration::from_nanos((delay.as_nanos() as f64 * jitter_factor) as u64);
                         delay += jitter;
                     }
 
@@ -346,11 +345,7 @@ mod tests {
         let result = retry(config, || {
             let n = attempts.get();
             attempts.set(n + 1);
-            if n < 2 {
-                Err("not yet")
-            } else {
-                Ok("success")
-            }
+            if n < 2 { Err("not yet") } else { Ok("success") }
         });
 
         assert!(result.is_ok());

@@ -1,0 +1,36 @@
+name: 🧪 Document
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  doc:
+    name: Generate Documentation
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@nightly
+      - uses: Swatinem/rust-cache@v2
+      - name: Generate docs
+        run: |
+          RUSTDOCFLAGS="--cfg docsrs" cargo doc --no-deps --all-features --workspace
+          echo '<html><head><meta http-equiv="refresh" content="0; url=commons/index.html"></head><body></body></html>' > target/doc/index.html
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./target/doc
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

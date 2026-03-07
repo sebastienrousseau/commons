@@ -71,9 +71,8 @@ impl Config {
     /// let config = Config::from_file("config.toml").unwrap();
     /// ```
     pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self, ConfigError> {
-        let content = std::fs::read_to_string(path.as_ref()).map_err(|e| {
-            ConfigError::FileRead(format!("{}: {}", path.as_ref().display(), e))
-        })?;
+        let content = std::fs::read_to_string(path.as_ref())
+            .map_err(|e| ConfigError::FileRead(format!("{}: {}", path.as_ref().display(), e)))?;
         Ok(Self { content })
     }
 
@@ -275,7 +274,10 @@ mod tests {
             port = 3000
         "#,
         );
-        assert_eq!(config.get::<String>("server.host"), Some("localhost".into()));
+        assert_eq!(
+            config.get::<String>("server.host"),
+            Some("localhost".into())
+        );
         assert_eq!(config.get::<i64>("server.port"), Some(3000));
     }
 

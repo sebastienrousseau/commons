@@ -54,10 +54,7 @@ impl Logger {
     pub fn log(&self, level: LogLevel, message: &str) {
         if level >= self.level {
             let timestamp = crate::time::unix_timestamp();
-            println!(
-                "[{}] {} [{}] {}",
-                timestamp, level, self.module, message
-            );
+            println!("[{}] {} [{}] {}", timestamp, level, self.module, message);
         }
     }
 

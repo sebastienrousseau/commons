@@ -92,25 +92,27 @@ pub mod prelude {
     pub use crate::config::{Config, ConfigBuilder, ConfigError};
 
     #[cfg(feature = "logging")]
-    pub use crate::logging::{Logger, LogLevel};
+    pub use crate::logging::{LogLevel, Logger};
 
     #[cfg(feature = "time")]
-    pub use crate::time::{unix_timestamp, unix_timestamp_millis, format_duration, parse_duration};
+    pub use crate::time::{format_duration, parse_duration, unix_timestamp, unix_timestamp_millis};
 
     #[cfg(feature = "collections")]
     pub use crate::collections::LruCache;
 
     #[cfg(feature = "validation")]
-    pub use crate::validation::{is_valid_email, is_valid_url, validate_length, validate_range, Validator};
+    pub use crate::validation::{
+        Validator, is_valid_email, is_valid_url, validate_length, validate_range,
+    };
 
     #[cfg(feature = "retry")]
-    pub use crate::retry::{retry, RetryConfig, BackoffStrategy};
+    pub use crate::retry::{BackoffStrategy, RetryConfig, retry};
 
     #[cfg(feature = "id")]
-    pub use crate::id::{generate_id, generate_prefixed_id, IdFormat, IdGenerator};
+    pub use crate::id::{IdFormat, IdGenerator, generate_id, generate_prefixed_id};
 
     #[cfg(feature = "env")]
-    pub use crate::env::{get_env, get_env_or, require_env, is_production, is_development};
+    pub use crate::env::{get_env, get_env_or, is_development, is_production, require_env};
 }
 
 /// Crate version.
