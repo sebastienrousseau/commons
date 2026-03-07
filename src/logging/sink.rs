@@ -13,6 +13,7 @@ use std::io::Write;
 #[cfg(unix)]
 use std::os::unix::net::UnixDatagram;
 
+/// No-op stub for [`std::os::unix::net::UnixDatagram`] on non-Unix platforms.
 #[cfg(not(unix))]
 #[allow(dead_code)]
 #[derive(Debug)]
@@ -21,6 +22,7 @@ pub struct UnixDatagram;
 #[cfg(not(unix))]
 #[allow(dead_code)]
 impl UnixDatagram {
+    /// Stub send that always succeeds with 0 bytes sent.
     pub fn send(&self, _: &[u8]) -> std::io::Result<usize> {
         Ok(0)
     }
