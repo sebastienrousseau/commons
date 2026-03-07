@@ -244,6 +244,7 @@ pub fn init() -> Result<FlushGuard, InitError> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serial_test::serial;
 
     #[test]
     fn test_init_error_display_logger_already_set() {
@@ -433,6 +434,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     #[allow(unsafe_code)]
     #[cfg_attr(miri, ignore)]
     fn test_detect_default_format_production() {
@@ -445,6 +447,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     #[allow(unsafe_code)]
     #[cfg_attr(miri, ignore)]
     fn test_detect_default_format_non_production() {
@@ -457,6 +460,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     #[allow(unsafe_code)]
     #[cfg_attr(miri, ignore)]
     fn test_parse_rust_log_unset() {
@@ -466,6 +470,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     #[allow(unsafe_code)]
     #[cfg_attr(miri, ignore)]
     fn test_parse_rust_log_simple_level() {
@@ -478,6 +483,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     #[allow(unsafe_code)]
     #[cfg_attr(miri, ignore)]
     fn test_parse_rust_log_crate_directives() {
@@ -493,6 +499,7 @@ mod tests {
     }
 
     #[test]
+    #[serial]
     #[allow(unsafe_code)]
     #[cfg_attr(miri, ignore)]
     fn test_parse_rust_log_invalid_level() {

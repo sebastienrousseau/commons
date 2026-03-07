@@ -724,17 +724,22 @@ mod tests {
     fn test_load_with_valid_toml_file() {
         let dir = tempfile::tempdir().unwrap();
         let config_path = dir.path().join("config.toml");
+        let log_path_str = dir
+            .path()
+            .join("test.log")
+            .display()
+            .to_string()
+            .replace('\\', "/");
         let toml_content = format!(
             r#"version = "1.0"
 profile = "test"
-log_file_path = "{}"
+log_file_path = "{log_path_str}"
 log_level = "INFO"
 log_format = "%level - %message"
 
 [[logging_destinations]]
 type = "Stdout"
 "#,
-            dir.path().join("test.log").display()
         );
         fs::write(&config_path, &toml_content).unwrap();
         let config = LoggingConfig::load(Some(&config_path)).unwrap();
@@ -1071,18 +1076,22 @@ type = "Stdout"
     async fn test_load_async_with_valid_file() {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("config.toml");
-        let log_path = dir.path().join("test.log");
+        let log_path_str = dir
+            .path()
+            .join("test.log")
+            .display()
+            .to_string()
+            .replace('\\', "/");
         let toml_content = format!(
             r#"version = "1.0"
 profile = "async_test"
-log_file_path = "{}"
+log_file_path = "{log_path_str}"
 log_level = "INFO"
 log_format = "%level - %message"
 
 [[logging_destinations]]
 type = "Stdout"
 "#,
-            log_path.display()
         );
         fs::write(&path, &toml_content).unwrap();
         let config = LoggingConfig::load_async(Some(&path)).await.unwrap();
@@ -1243,17 +1252,22 @@ type = "Stdout"
     async fn test_hot_reload_async() {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("hot_reload.toml");
+        let log_path_str = dir
+            .path()
+            .join("test.log")
+            .display()
+            .to_string()
+            .replace('\\', "/");
         let initial = format!(
             r#"version = "1.0"
 profile = "initial"
-log_file_path = "{}"
+log_file_path = "{log_path_str}"
 log_level = "INFO"
 log_format = "%level - %message"
 
 [[logging_destinations]]
 type = "Stdout"
 "#,
-            dir.path().join("test.log").display()
         );
         fs::write(&path, &initial).unwrap();
         let config = LoggingConfig::load_async(Some(&path)).await.unwrap();
