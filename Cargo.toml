@@ -16,7 +16,7 @@ name = "euxis-commons"
 readme = "README.md"
 repository = "https://github.com/sebastienrousseau/commons"
 rust-version = "1.88.0"
-version = "0.0.1"
+version = "0.0.2"
 include = [
     "/LICENSE-APACHE",
     "/LICENSE-MIT",

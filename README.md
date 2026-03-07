@@ -80,7 +80,7 @@ Or with specific features only:
 
 ```toml
 [dependencies]
-euxis-commons = { version = "0.0.1", default-features = false, features = ["error", "time"] }
+euxis-commons = { version = "0.0.2", default-features = false, features = ["error", "time"] }
 ```
 
 ## Features

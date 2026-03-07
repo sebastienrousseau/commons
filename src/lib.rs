@@ -34,7 +34,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! commons = { version = "0.0.1", default-features = false, features = ["error", "time"] }
+//! commons = { version = "0.0.2", default-features = false, features = ["error", "time"] }
 //! ```
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
@@ -138,6 +138,6 @@ mod tests {
 
     #[test]
     fn test_version() {
-        assert_eq!(version(), "0.0.1");
+        assert_eq!(version(), "0.0.2");
     }
 }
