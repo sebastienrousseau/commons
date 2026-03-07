@@ -191,11 +191,7 @@ impl Log {
         let caller = std::panic::Location::caller();
         self.attributes.insert(
             "caller".to_string(),
-            serde_json::Value::String(format!(
-                "{}:{}",
-                caller.file(),
-                caller.line()
-            )),
+            serde_json::Value::String(format!("{}:{}", caller.file(), caller.line())),
         );
         super::engine::ENGINE.inc_format(self.format);
         let event = super::engine::LogEvent {
@@ -220,10 +216,7 @@ impl Log {
             write!(f, " {key}=")?;
             match value {
                 serde_json::Value::String(s) => {
-                    if s.contains(' ')
-                        || s.contains('"')
-                        || s.is_empty()
-                    {
+                    if s.contains(' ') || s.contains('"') || s.is_empty() {
                         write!(f, "\"{0}\"", s.replace('"', "\\\""))?;
                     } else {
                         write!(f, "{s}")?;
@@ -278,11 +271,7 @@ impl Log {
         write!(
             f,
             "SessionID={} Timestamp={} Description={} Level={} Component={}",
-            self.session_id,
-            self.time,
-            self.description,
-            self.level,
-            self.component
+            self.session_id, self.time, self.description, self.level, self.component
         )
     }
 
@@ -290,11 +279,7 @@ impl Log {
         write!(
             f,
             "CEF:0|{}|{}|{}|{}|{}|CEF",
-            self.session_id,
-            self.time,
-            self.level,
-            self.component,
-            self.description
+            self.session_id, self.time, self.level, self.component, self.description
         )
     }
 
@@ -302,11 +287,7 @@ impl Log {
         write!(
             f,
             "ELF:0|{}|{}|{}|{}|{}|ELF",
-            self.session_id,
-            self.time,
-            self.level,
-            self.component,
-            self.description
+            self.session_id, self.time, self.level, self.component, self.description
         )
     }
 
@@ -314,11 +295,7 @@ impl Log {
         write!(
             f,
             "W3C:0|{}|{}|{}|{}|{}|W3C",
-            self.session_id,
-            self.time,
-            self.level,
-            self.component,
-            self.description
+            self.session_id, self.time, self.level, self.component, self.description
         )
     }
 
@@ -326,11 +303,7 @@ impl Log {
         write!(
             f,
             "{} - - [{}] \"{}\" {} {}",
-            &*CACHED_HOSTNAME,
-            self.time,
-            self.description,
-            self.level,
-            self.component
+            &*CACHED_HOSTNAME, self.time, self.description, self.level, self.component
         )
     }
 
@@ -338,11 +311,7 @@ impl Log {
         write!(
             f,
             r#"<log4j:event logger="{}" timestamp="{}" level="{}" thread="{}"><log4j:message>{}</log4j:message></log4j:event>"#,
-            self.component,
-            self.time,
-            self.level,
-            self.session_id,
-            self.description
+            self.component, self.time, self.level, self.session_id, self.description
         )
     }
 
@@ -423,8 +392,7 @@ impl Log {
 
     fn fmt_otlp(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let empty = serde_json::Value::String(String::new());
-        let trace_id =
-            self.attributes.get("trace_id").unwrap_or(&empty);
+        let trace_id = self.attributes.get("trace_id").unwrap_or(&empty);
         let span_id = self.attributes.get("span_id").unwrap_or(&empty);
         f.write_str("{\"attributes\":")?;
         write_json_map(f, &self.attributes)?;
@@ -501,10 +469,8 @@ mod tests {
             .format(LogFormat::Logfmt);
         log.attributes
             .insert("key".to_string(), serde_json::json!("value"));
-        log.attributes.insert(
-            "space".to_string(),
-            serde_json::json!("has space"),
-        );
+        log.attributes
+            .insert("space".to_string(), serde_json::json!("has space"));
         log.attributes
             .insert("num".to_string(), serde_json::json!(42));
         log.attributes
@@ -616,10 +582,7 @@ mod tests {
     #[cfg_attr(miri, ignore)]
     fn test_builder_with() {
         let log = Log::info("x").with("key", "val");
-        assert_eq!(
-            log.attributes.get("key"),
-            Some(&serde_json::json!("val"))
-        );
+        assert_eq!(log.attributes.get("key"), Some(&serde_json::json!("val")));
     }
 
     #[test]
@@ -669,11 +632,7 @@ mod tests {
         let caller = std::panic::Location::caller();
         log.attributes.insert(
             "caller".to_string(),
-            serde_json::Value::String(format!(
-                "{}:{}",
-                caller.file(),
-                caller.line()
-            )),
+            serde_json::Value::String(format!("{}:{}", caller.file(), caller.line())),
         );
         assert!(log.attributes.contains_key("caller"));
 

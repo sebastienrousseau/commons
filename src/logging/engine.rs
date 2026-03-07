@@ -74,10 +74,7 @@ impl fmt::Debug for LockFreeEngine {
             .field("filter_level", &self.filter_level)
             .field(
                 "flusher_thread_handle",
-                &self
-                    .flusher_thread_handle
-                    .as_ref()
-                    .map(thread::Thread::id),
+                &self.flusher_thread_handle.as_ref().map(thread::Thread::id),
             )
             .finish_non_exhaustive()
     }
@@ -116,8 +113,7 @@ impl LockFreeEngine {
                     let mut fmt_buf = Vec::with_capacity(512);
 
                     loop {
-                        let mut batch: [Option<LogEvent>;
-                            MAX_DRAIN_BATCH_SIZE] =
+                        let mut batch: [Option<LogEvent>; MAX_DRAIN_BATCH_SIZE] =
                             std::array::from_fn(|_| None);
                         let mut count = 0;
                         while count < MAX_DRAIN_BATCH_SIZE {
@@ -135,9 +131,7 @@ impl LockFreeEngine {
                             sink.emit(event.level.as_str(), &fmt_buf);
                         }
 
-                        if flusher_shutdown.load(Ordering::Relaxed)
-                            && flusher_queue.is_empty()
-                        {
+                        if flusher_shutdown.load(Ordering::Relaxed) && flusher_queue.is_empty() {
                             break;
                         }
 
@@ -145,19 +139,11 @@ impl LockFreeEngine {
                         thread::park_timeout(Duration::from_millis(5));
                     }
                 })
-                .expect(
-                    "Failed to spawn logging-flusher background thread",
-                );
+                .expect("Failed to spawn logging-flusher background thread");
 
             // Spawn the TUI dashboard thread if RLG_TUI=1
-            if std::env::var("RLG_TUI")
-                .map(|v| v == "1")
-                .unwrap_or(false)
-            {
-                spawn_tui_thread(
-                    metrics.clone(),
-                    shutdown_flag.clone(),
-                );
+            if std::env::var("RLG_TUI").map(|v| v == "1").unwrap_or(false) {
+                spawn_tui_thread(metrics.clone(), shutdown_flag.clone());
             }
 
             Some(handle)
@@ -166,8 +152,7 @@ impl LockFreeEngine {
         #[cfg(miri)]
         let flusher_handle: Option<thread::JoinHandle<()>> = None;
 
-        let flusher_thread_handle =
-            flusher_handle.as_ref().map(|h| h.thread().clone());
+        let flusher_thread_handle = flusher_handle.as_ref().map(|h| h.thread().clone());
 
         Self {
             queue,
@@ -293,9 +278,9 @@ impl FastSerializer {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use super::super::log_entry::Log;
     use super::super::log_format::LogFormat;
+    use super::*;
 
     // ── FastSerializer ─────────────────────────────────────────────────
     #[test]
@@ -316,10 +301,7 @@ mod tests {
     fn test_fast_serializer_append_u64_max() {
         let mut buf = Vec::new();
         FastSerializer::append_u64(&mut buf, u64::MAX);
-        assert_eq!(
-            std::str::from_utf8(&buf).unwrap(),
-            u64::MAX.to_string()
-        );
+        assert_eq!(std::str::from_utf8(&buf).unwrap(), u64::MAX.to_string());
     }
 
     #[test]
@@ -407,14 +389,8 @@ mod tests {
         engine.inc_format(LogFormat::JSON);
         engine.inc_format(LogFormat::JSON);
         engine.inc_format(LogFormat::MCP);
-        assert_eq!(
-            engine.metrics.fmt_json.load(Ordering::Relaxed),
-            2
-        );
-        assert_eq!(
-            engine.metrics.fmt_mcp.load(Ordering::Relaxed),
-            1
-        );
+        assert_eq!(engine.metrics.fmt_json.load(Ordering::Relaxed), 2);
+        assert_eq!(engine.metrics.fmt_mcp.load(Ordering::Relaxed), 1);
         engine.shutdown();
     }
 
@@ -445,11 +421,9 @@ mod tests {
             level_num: LogLevel::INFO.to_numeric(),
             log: Log::info("filtered out").session_id(1).time("ts"),
         };
-        let events_before =
-            engine.metrics.total_events.load(Ordering::Relaxed);
+        let events_before = engine.metrics.total_events.load(Ordering::Relaxed);
         engine.ingest(event);
-        let events_after =
-            engine.metrics.total_events.load(Ordering::Relaxed);
+        let events_after = engine.metrics.total_events.load(Ordering::Relaxed);
         // Event should have been dropped, so total_events unchanged
         assert_eq!(events_before, events_after);
         engine.shutdown();
@@ -460,16 +434,14 @@ mod tests {
     #[cfg_attr(miri, ignore)]
     fn test_engine_ingest_error_increments_errors() {
         let engine = LockFreeEngine::new(16);
-        let errors_before =
-            engine.metrics.error_count.load(Ordering::Relaxed);
+        let errors_before = engine.metrics.error_count.load(Ordering::Relaxed);
         let event = LogEvent {
             level: LogLevel::ERROR,
             level_num: LogLevel::ERROR.to_numeric(),
             log: Log::error("fail").session_id(1).time("ts"),
         };
         engine.ingest(event);
-        let errors_after =
-            engine.metrics.error_count.load(Ordering::Relaxed);
+        let errors_after = engine.metrics.error_count.load(Ordering::Relaxed);
         assert_eq!(errors_after, errors_before + 1);
         engine.shutdown();
     }
@@ -479,16 +451,14 @@ mod tests {
     #[cfg_attr(miri, ignore)]
     fn test_engine_ingest_fatal_increments_errors() {
         let engine = LockFreeEngine::new(16);
-        let errors_before =
-            engine.metrics.error_count.load(Ordering::Relaxed);
+        let errors_before = engine.metrics.error_count.load(Ordering::Relaxed);
         let event = LogEvent {
             level: LogLevel::FATAL,
             level_num: LogLevel::FATAL.to_numeric(),
             log: Log::fatal("doom").session_id(1).time("ts"),
         };
         engine.ingest(event);
-        let errors_after =
-            engine.metrics.error_count.load(Ordering::Relaxed);
+        let errors_after = engine.metrics.error_count.load(Ordering::Relaxed);
         assert_eq!(errors_after, errors_before + 1);
         engine.shutdown();
     }
@@ -504,10 +474,7 @@ mod tests {
             log: Log::warn("w").session_id(1).time("ts"),
         };
         engine.ingest(event);
-        assert_eq!(
-            engine.metrics.level_warn.load(Ordering::Relaxed),
-            1
-        );
+        assert_eq!(engine.metrics.level_warn.load(Ordering::Relaxed), 1);
         engine.shutdown();
     }
 
@@ -523,17 +490,13 @@ mod tests {
             let event = LogEvent {
                 level: LogLevel::INFO,
                 level_num: LogLevel::INFO.to_numeric(),
-                log: Log::info(&format!("msg-{i}"))
-                    .session_id(i)
-                    .time("ts"),
+                log: Log::info(&format!("msg-{i}")).session_id(i).time("ts"),
             };
             engine.ingest(event);
         }
         // With 50 events into a buffer of size 2, eviction is virtually
         // guaranteed even with a background flusher.
-        assert!(
-            engine.metrics.dropped_events.load(Ordering::Relaxed) >= 1
-        );
+        assert!(engine.metrics.dropped_events.load(Ordering::Relaxed) >= 1);
         engine.shutdown();
     }
 

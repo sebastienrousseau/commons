@@ -111,9 +111,8 @@ pub mod prelude {
 
     #[cfg(feature = "logging")]
     pub use crate::logging::{
-        LogLevel, Logger, LogFormat, Log, LoggingError, LoggingResult,
-        LoggingConfig, LoggingBuilder, FlushGuard,
-        init as logging_init, builder as logging_builder,
+        FlushGuard, Log, LogFormat, LogLevel, Logger, LoggingBuilder, LoggingConfig, LoggingError,
+        LoggingResult, builder as logging_builder, init as logging_init,
     };
 
     #[cfg(feature = "time")]

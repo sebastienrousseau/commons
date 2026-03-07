@@ -32,9 +32,7 @@ pub const fn to_log_level_filter(level: LogLevel) -> log::LevelFilter {
         LogLevel::DEBUG => log::LevelFilter::Debug,
         LogLevel::VERBOSE | LogLevel::INFO => log::LevelFilter::Info,
         LogLevel::WARN => log::LevelFilter::Warn,
-        LogLevel::ERROR | LogLevel::FATAL | LogLevel::CRITICAL => {
-            log::LevelFilter::Error
-        }
+        LogLevel::ERROR | LogLevel::FATAL | LogLevel::CRITICAL => log::LevelFilter::Error,
         LogLevel::NONE | LogLevel::DISABLED => log::LevelFilter::Off,
     }
 }
@@ -55,8 +53,7 @@ impl LoggingFacade {
 
 impl log::Log for LoggingFacade {
     fn enabled(&self, metadata: &log::Metadata<'_>) -> bool {
-        map_log_level(metadata.level()).to_numeric()
-            >= ENGINE.filter_level()
+        map_log_level(metadata.level()).to_numeric() >= ENGINE.filter_level()
     }
 
     fn log(&self, record: &log::Record<'_>) {
@@ -66,8 +63,7 @@ impl log::Log for LoggingFacade {
 
         let level = map_log_level(record.level());
         let mut entry = Log::build(level, &record.args().to_string());
-        entry.component =
-            std::borrow::Cow::Owned(record.target().to_string());
+        entry.component = std::borrow::Cow::Owned(record.target().to_string());
         entry.format = self.format;
 
         if let Some(file) = record.file() {
@@ -103,10 +99,7 @@ mod tests {
 
     #[test]
     fn test_to_log_level_filter_all_variants() {
-        assert_eq!(
-            to_log_level_filter(LogLevel::ALL),
-            log::LevelFilter::Trace
-        );
+        assert_eq!(to_log_level_filter(LogLevel::ALL), log::LevelFilter::Trace);
         assert_eq!(
             to_log_level_filter(LogLevel::TRACE),
             log::LevelFilter::Trace
@@ -119,14 +112,8 @@ mod tests {
             to_log_level_filter(LogLevel::VERBOSE),
             log::LevelFilter::Info
         );
-        assert_eq!(
-            to_log_level_filter(LogLevel::INFO),
-            log::LevelFilter::Info
-        );
-        assert_eq!(
-            to_log_level_filter(LogLevel::WARN),
-            log::LevelFilter::Warn
-        );
+        assert_eq!(to_log_level_filter(LogLevel::INFO), log::LevelFilter::Info);
+        assert_eq!(to_log_level_filter(LogLevel::WARN), log::LevelFilter::Warn);
         assert_eq!(
             to_log_level_filter(LogLevel::ERROR),
             log::LevelFilter::Error
@@ -139,10 +126,7 @@ mod tests {
             to_log_level_filter(LogLevel::CRITICAL),
             log::LevelFilter::Error
         );
-        assert_eq!(
-            to_log_level_filter(LogLevel::NONE),
-            log::LevelFilter::Off
-        );
+        assert_eq!(to_log_level_filter(LogLevel::NONE), log::LevelFilter::Off);
         assert_eq!(
             to_log_level_filter(LogLevel::DISABLED),
             log::LevelFilter::Off
@@ -171,26 +155,18 @@ mod tests {
         // Reset filter to 0 (ALL) so everything is enabled
         ENGINE.set_filter(0);
 
-        let metadata = log::MetadataBuilder::new()
-            .level(log::Level::Trace)
-            .build();
+        let metadata = log::MetadataBuilder::new().level(log::Level::Trace).build();
         assert!(log::Log::enabled(&logger, &metadata));
 
-        let metadata = log::MetadataBuilder::new()
-            .level(log::Level::Error)
-            .build();
+        let metadata = log::MetadataBuilder::new().level(log::Level::Error).build();
         assert!(log::Log::enabled(&logger, &metadata));
 
         // Test with a high filter: only ERROR should be enabled
         ENGINE.set_filter(LogLevel::ERROR.to_numeric());
-        let trace_metadata = log::MetadataBuilder::new()
-            .level(log::Level::Trace)
-            .build();
+        let trace_metadata = log::MetadataBuilder::new().level(log::Level::Trace).build();
         assert!(!log::Log::enabled(&logger, &trace_metadata));
 
-        let error_metadata = log::MetadataBuilder::new()
-            .level(log::Level::Error)
-            .build();
+        let error_metadata = log::MetadataBuilder::new().level(log::Level::Error).build();
         assert!(log::Log::enabled(&logger, &error_metadata));
 
         // Reset filter back

@@ -5,10 +5,7 @@
 //! TOML-based configuration: loading, validation, diffing, and hot-reload.
 
 use super::log_level::LogLevel;
-use config_crate::{
-    Config as ConfigSource, ConfigError as SourceConfigError,
-    File as ConfigFile,
-};
+use config_crate::{Config as ConfigSource, ConfigError as SourceConfigError, File as ConfigFile};
 #[cfg(feature = "logging-tokio")]
 use notify::{Event, EventKind, RecursiveMode, Watcher};
 use parking_lot::RwLock;
@@ -82,18 +79,7 @@ impl From<crate::config::ConfigError> for LoggingConfigError {
 }
 
 /// Log rotation policy variants.
-#[derive(
-    Clone,
-    Copy,
-    Debug,
-    Deserialize,
-    Serialize,
-    Eq,
-    PartialEq,
-    Ord,
-    PartialOrd,
-    Hash,
-)]
+#[derive(Clone, Copy, Debug, Deserialize, Serialize, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub enum LogRotation {
     /// Size-based log rotation.
     Size(NonZeroU64),
@@ -117,14 +103,16 @@ impl FromStr for LogRotation {
                         "Missing size value for log rotation".to_string(),
                     )
                 })?;
-                let size = size_str.parse::<u64>().map_err(|_| LoggingConfigError::ValidationError(format!("Invalid size value for log rotation: '{size_str}'")))?;
-                Ok(Self::Size(NonZeroU64::new(size).ok_or_else(
-                    || {
-                        LoggingConfigError::ValidationError(
-                            "Log rotation size must be greater than 0".to_string(),
-                        )
-                    },
-                )?))
+                let size = size_str.parse::<u64>().map_err(|_| {
+                    LoggingConfigError::ValidationError(format!(
+                        "Invalid size value for log rotation: '{size_str}'"
+                    ))
+                })?;
+                Ok(Self::Size(NonZeroU64::new(size).ok_or_else(|| {
+                    LoggingConfigError::ValidationError(
+                        "Log rotation size must be greater than 0".to_string(),
+                    )
+                })?))
             }
             "time" => {
                 let time_str = parts.get(1).ok_or_else(|| {
@@ -132,30 +120,39 @@ impl FromStr for LogRotation {
                         "Missing time value for log rotation".to_string(),
                     )
                 })?;
-                let time = time_str.parse::<u64>().map_err(|_| LoggingConfigError::ValidationError(format!("Invalid time value for log rotation: '{time_str}'")))?;
-                Ok(Self::Time(NonZeroU64::new(time).ok_or_else(
-                    || {
-                        LoggingConfigError::ValidationError(
-                            "Log rotation time must be greater than 0".to_string(),
-                        )
-                    },
-                )?))
+                let time = time_str.parse::<u64>().map_err(|_| {
+                    LoggingConfigError::ValidationError(format!(
+                        "Invalid time value for log rotation: '{time_str}'"
+                    ))
+                })?;
+                Ok(Self::Time(NonZeroU64::new(time).ok_or_else(|| {
+                    LoggingConfigError::ValidationError(
+                        "Log rotation time must be greater than 0".to_string(),
+                    )
+                })?))
             }
             "date" => Ok(Self::Date),
             "count" => {
                 let count = parts
                     .get(1)
-                    .ok_or_else(|| LoggingConfigError::ValidationError("Missing count value for log rotation".to_string()))?
+                    .ok_or_else(|| {
+                        LoggingConfigError::ValidationError(
+                            "Missing count value for log rotation".to_string(),
+                        )
+                    })?
                     .parse::<usize>()
-                    .map_err(|_| LoggingConfigError::ValidationError(format!("Invalid count value for log rotation: '{0}'", parts[1])))?;
+                    .map_err(|_| {
+                        LoggingConfigError::ValidationError(format!(
+                            "Invalid count value for log rotation: '{0}'",
+                            parts[1]
+                        ))
+                    })?;
                 if count == 0 {
                     Err(LoggingConfigError::ValidationError(
                         "Log rotation count must be greater than 0".to_string(),
                     ))
                 } else {
-                    Ok(Self::Count(
-                        count.try_into().unwrap_or(u32::MAX),
-                    ))
+                    Ok(Self::Count(count.try_into().unwrap_or(u32::MAX)))
                 }
             }
             _ => Err(LoggingConfigError::ValidationError(format!(
@@ -229,8 +226,7 @@ impl Default for LoggingConfig {
             profile: default_profile(),
             log_file_path: default_log_file_path(),
             log_level: LogLevel::INFO,
-            log_rotation: NonZeroU64::new(10 * 1024 * 1024)
-                .map(LogRotation::Size),
+            log_rotation: NonZeroU64::new(10 * 1024 * 1024).map(LogRotation::Size),
             log_format: default_log_format(),
             logging_destinations: default_logging_destinations(),
             env_vars: HashMap::new(),
@@ -249,10 +245,8 @@ impl LoggingConfig {
         config_path: Option<P>,
     ) -> Result<Arc<RwLock<Self>>, LoggingConfigError> {
         let config = if let Some(path) = config_path {
-            let contents =
-                fs::read_to_string(path.as_ref()).map_err(|e| {
-                    LoggingConfigError::FileReadError(e.to_string())
-                })?;
+            let contents = fs::read_to_string(path.as_ref())
+                .map_err(|e| LoggingConfigError::FileReadError(e.to_string()))?;
             let config_source = ConfigSource::builder()
                 .add_source(ConfigFile::from_str(
                     &contents,
@@ -286,13 +280,13 @@ impl LoggingConfig {
     ) -> Result<Arc<RwLock<Self>>, LoggingConfigError> {
         let path_buf = config_path.map(|p| p.as_ref().to_path_buf());
         let config = if let Some(path) = path_buf {
-            let mut file = File::open(&path).await.map_err(|e| {
-                LoggingConfigError::FileReadError(e.to_string())
-            })?;
+            let mut file = File::open(&path)
+                .await
+                .map_err(|e| LoggingConfigError::FileReadError(e.to_string()))?;
             let mut contents = String::new();
-            file.read_to_string(&mut contents).await.map_err(|e| {
-                LoggingConfigError::FileReadError(e.to_string())
-            })?;
+            file.read_to_string(&mut contents)
+                .await
+                .map_err(|e| LoggingConfigError::FileReadError(e.to_string()))?;
             let config_source = ConfigSource::builder()
                 .add_source(ConfigFile::from_str(
                     &contents,
@@ -319,20 +313,12 @@ impl LoggingConfig {
     /// # Errors
     ///
     /// Returns an error if the file cannot be written or serialization fails.
-    pub fn save_to_file<P: AsRef<Path>>(
-        &self,
-        path: P,
-    ) -> Result<(), LoggingConfigError> {
-        let config_string =
-            toml::to_string_pretty(self).map_err(|e| {
-                LoggingConfigError::FileWriteError(format!(
-                    "Failed to serialize config to TOML: {e}"
-                ))
-            })?;
+    pub fn save_to_file<P: AsRef<Path>>(&self, path: P) -> Result<(), LoggingConfigError> {
+        let config_string = toml::to_string_pretty(self).map_err(|e| {
+            LoggingConfigError::FileWriteError(format!("Failed to serialize config to TOML: {e}"))
+        })?;
         fs::write(path, config_string).map_err(|e| {
-            LoggingConfigError::FileWriteError(format!(
-                "Failed to write config file: {e}"
-            ))
+            LoggingConfigError::FileWriteError(format!("Failed to write config file: {e}"))
         })?;
         Ok(())
     }
@@ -342,11 +328,7 @@ impl LoggingConfig {
     /// # Errors
     ///
     /// Returns an error if the value cannot be serialized or the key is unknown.
-    pub fn set<T: Serialize>(
-        &mut self,
-        key: &str,
-        value: T,
-    ) -> Result<(), LoggingConfigError> {
+    pub fn set<T: Serialize>(&mut self, key: &str, value: T) -> Result<(), LoggingConfigError> {
         let val = serde_json::to_value(value)
             .map_err(|e| LoggingConfigError::ValidationError(e.to_string()))?;
 
@@ -370,28 +352,19 @@ impl LoggingConfig {
                 }
             }
             "log_file_path" => {
-                self.log_file_path = serde_json::from_value(val)
-                    .map_err(|e| {
-                        LoggingConfigError::ConfigParseError(
-                            SourceConfigError::Message(e.to_string()),
-                        )
-                    })?;
+                self.log_file_path = serde_json::from_value(val).map_err(|e| {
+                    LoggingConfigError::ConfigParseError(SourceConfigError::Message(e.to_string()))
+                })?;
             }
             "log_level" => {
-                self.log_level =
-                    serde_json::from_value(val).map_err(|e| {
-                        LoggingConfigError::ConfigParseError(
-                            SourceConfigError::Message(e.to_string()),
-                        )
-                    })?;
+                self.log_level = serde_json::from_value(val).map_err(|e| {
+                    LoggingConfigError::ConfigParseError(SourceConfigError::Message(e.to_string()))
+                })?;
             }
             "log_rotation" => {
-                self.log_rotation = serde_json::from_value(val)
-                    .map_err(|e| {
-                        LoggingConfigError::ConfigParseError(
-                            SourceConfigError::Message(e.to_string()),
-                        )
-                    })?;
+                self.log_rotation = serde_json::from_value(val).map_err(|e| {
+                    LoggingConfigError::ConfigParseError(SourceConfigError::Message(e.to_string()))
+                })?;
             }
             "log_format" => {
                 if let Some(s) = val.as_str() {
@@ -403,20 +376,14 @@ impl LoggingConfig {
                 }
             }
             "logging_destinations" => {
-                self.logging_destinations = serde_json::from_value(val)
-                    .map_err(|e| {
-                        LoggingConfigError::ConfigParseError(
-                            SourceConfigError::Message(e.to_string()),
-                        )
-                    })?;
+                self.logging_destinations = serde_json::from_value(val).map_err(|e| {
+                    LoggingConfigError::ConfigParseError(SourceConfigError::Message(e.to_string()))
+                })?;
             }
             "env_vars" => {
-                self.env_vars =
-                    serde_json::from_value(val).map_err(|e| {
-                        LoggingConfigError::ConfigParseError(
-                            SourceConfigError::Message(e.to_string()),
-                        )
-                    })?;
+                self.env_vars = serde_json::from_value(val).map_err(|e| {
+                    LoggingConfigError::ConfigParseError(SourceConfigError::Message(e.to_string()))
+                })?;
             }
             _ => {
                 return Err(LoggingConfigError::ValidationError(format!(
@@ -465,9 +432,9 @@ impl LoggingConfig {
                 ));
             }
             if value.trim().is_empty() {
-                return Err(LoggingConfigError::ValidationError(
-                    format!("Environment variable value for '{key}' cannot be empty"),
-                ));
+                return Err(LoggingConfigError::ValidationError(format!(
+                    "Environment variable value for '{key}' cannot be empty"
+                )));
             }
         }
         Ok(())
@@ -479,9 +446,7 @@ impl LoggingConfig {
     ///
     /// Returns an error if the directories or files cannot be created.
     pub fn ensure_paths(&self) -> Result<(), LoggingConfigError> {
-        if let Some(LoggingDestination::File(path)) =
-            self.logging_destinations.first()
-        {
+        if let Some(LoggingDestination::File(path)) = self.logging_destinations.first() {
             if let Some(parent_dir) = path.parent() {
                 fs::create_dir_all(parent_dir).map_err(|e| {
                     LoggingConfigError::ValidationError(format!(
@@ -494,9 +459,7 @@ impl LoggingConfig {
                 .append(true)
                 .open(path)
                 .map_err(|e| {
-                    LoggingConfigError::ValidationError(format!(
-                        "Log file is not writable: {e}"
-                    ))
+                    LoggingConfigError::ValidationError(format!("Log file is not writable: {e}"))
                 })?;
         }
         Ok(())
@@ -531,10 +494,7 @@ impl LoggingConfig {
         let mut watcher = notify::recommended_watcher(move |res| {
             let _ = tx.blocking_send(res);
         })?;
-        watcher.watch(
-            Path::new(config_path),
-            RecursiveMode::NonRecursive,
-        )?;
+        watcher.watch(Path::new(config_path), RecursiveMode::NonRecursive)?;
 
         let config_clone = config.clone();
         let path_owned = config_path.to_string();
@@ -558,10 +518,7 @@ impl LoggingConfig {
 
     /// Compares two configurations and returns the differences.
     #[must_use]
-    pub fn diff(
-        config1: &Self,
-        config2: &Self,
-    ) -> HashMap<String, String> {
+    pub fn diff(config1: &Self, config2: &Self) -> HashMap<String, String> {
         let mut diffs = HashMap::new();
         macro_rules! config_diff_fields {
             ($c1:expr, $c2:expr, $diffs:expr;
@@ -780,8 +737,7 @@ type = "Stdout"
             dir.path().join("test.log").display()
         );
         fs::write(&config_path, &toml_content).unwrap();
-        let config =
-            LoggingConfig::load(Some(&config_path)).unwrap();
+        let config = LoggingConfig::load(Some(&config_path)).unwrap();
         let cfg = config.read();
         assert_eq!(cfg.version, "1.0");
         assert_eq!(cfg.profile, "test");
@@ -791,8 +747,7 @@ type = "Stdout"
 
     #[test]
     fn test_load_with_none_defaults() {
-        let config =
-            LoggingConfig::load(None::<&str>).unwrap();
+        let config = LoggingConfig::load(None::<&str>).unwrap();
         let cfg = config.read();
         assert_eq!(cfg.version, "1.0");
         assert_eq!(cfg.profile, "default");
@@ -840,8 +795,7 @@ type = "Stdout"
     #[test]
     fn test_save_to_file_invalid_path() {
         let config = LoggingConfig::default();
-        let result =
-            config.save_to_file("/nonexistent/dir/config.toml");
+        let result = config.save_to_file("/nonexistent/dir/config.toml");
         assert!(result.is_err());
         let err_str = format!("{}", result.unwrap_err());
         assert!(err_str.contains("Failed to write"));
@@ -993,19 +947,15 @@ type = "Stdout"
         // SAFETY: Test-only env var.
         unsafe { env::set_var("HOME", "/test/home") };
         let expanded = config.expand_env_vars();
-        assert_eq!(
-            expanded.env_vars.get("HOME").unwrap(),
-            "/test/home"
-        );
+        assert_eq!(expanded.env_vars.get("HOME").unwrap(), "/test/home");
     }
 
     #[test]
     fn test_expand_env_vars_nonexistent() {
         let mut config = LoggingConfig::default();
-        config.env_vars.insert(
-            "NONEXISTENT_VAR_12345".to_string(),
-            "original".to_string(),
-        );
+        config
+            .env_vars
+            .insert("NONEXISTENT_VAR_12345".to_string(), "original".to_string());
         let expanded = config.expand_env_vars();
         assert_eq!(
             expanded.env_vars.get("NONEXISTENT_VAR_12345").unwrap(),
@@ -1026,41 +976,28 @@ type = "Stdout"
 
     #[test]
     fn test_logging_config_error_display_variants() {
-        let err = LoggingConfigError::InvalidFilePath(
-            "bad/path".to_string(),
-        );
+        let err = LoggingConfigError::InvalidFilePath("bad/path".to_string());
         assert!(err.to_string().contains("bad/path"));
 
-        let err = LoggingConfigError::FileReadError(
-            "read failed".to_string(),
-        );
+        let err = LoggingConfigError::FileReadError("read failed".to_string());
         assert!(err.to_string().contains("read failed"));
 
-        let err = LoggingConfigError::FileWriteError(
-            "write failed".to_string(),
-        );
+        let err = LoggingConfigError::FileWriteError("write failed".to_string());
         assert!(err.to_string().contains("write failed"));
 
-        let err = LoggingConfigError::ValidationError(
-            "invalid config".to_string(),
-        );
+        let err = LoggingConfigError::ValidationError("invalid config".to_string());
         assert!(err.to_string().contains("invalid config"));
 
-        let err = LoggingConfigError::VersionError(
-            "wrong version".to_string(),
-        );
+        let err = LoggingConfigError::VersionError("wrong version".to_string());
         assert!(err.to_string().contains("wrong version"));
 
-        let err = LoggingConfigError::MissingFieldError(
-            "field_x".to_string(),
-        );
+        let err = LoggingConfigError::MissingFieldError("field_x".to_string());
         assert!(err.to_string().contains("field_x"));
     }
 
     #[test]
     fn test_logging_destination_file_variant() {
-        let dest =
-            LoggingDestination::File(PathBuf::from("some.log"));
+        let dest = LoggingDestination::File(PathBuf::from("some.log"));
         assert!(matches!(dest, LoggingDestination::File(_)));
     }
 
@@ -1072,9 +1009,7 @@ type = "Stdout"
 
     #[test]
     fn test_logging_destination_network_variant() {
-        let dest = LoggingDestination::Network(
-            "tcp://localhost:514".to_string(),
-        );
+        let dest = LoggingDestination::Network("tcp://localhost:514".to_string());
         assert!(matches!(dest, LoggingDestination::Network(_)));
     }
 
@@ -1082,23 +1017,17 @@ type = "Stdout"
     fn test_logging_destination_serde_roundtrip() {
         let dest = LoggingDestination::Stdout;
         let json = serde_json::to_string(&dest).unwrap();
-        let back: LoggingDestination =
-            serde_json::from_str(&json).unwrap();
+        let back: LoggingDestination = serde_json::from_str(&json).unwrap();
         assert_eq!(dest, back);
 
-        let dest =
-            LoggingDestination::File(PathBuf::from("test.log"));
+        let dest = LoggingDestination::File(PathBuf::from("test.log"));
         let json = serde_json::to_string(&dest).unwrap();
-        let back: LoggingDestination =
-            serde_json::from_str(&json).unwrap();
+        let back: LoggingDestination = serde_json::from_str(&json).unwrap();
         assert_eq!(dest, back);
 
-        let dest = LoggingDestination::Network(
-            "tcp://example.com".to_string(),
-        );
+        let dest = LoggingDestination::Network("tcp://example.com".to_string());
         let json = serde_json::to_string(&dest).unwrap();
-        let back: LoggingDestination =
-            serde_json::from_str(&json).unwrap();
+        let back: LoggingDestination = serde_json::from_str(&json).unwrap();
         assert_eq!(dest, back);
     }
 
@@ -1131,8 +1060,7 @@ type = "Stdout"
 
     #[test]
     fn test_log_rotation_time_display() {
-        let time =
-            LogRotation::Time(NonZeroU64::new(3600).unwrap());
+        let time = LogRotation::Time(NonZeroU64::new(3600).unwrap());
         assert_eq!(time.to_string(), "Time: 3600 seconds");
     }
 
@@ -1157,26 +1085,21 @@ type = "Stdout"
             log_path.display()
         );
         fs::write(&path, &toml_content).unwrap();
-        let config =
-            LoggingConfig::load_async(Some(&path)).await.unwrap();
+        let config = LoggingConfig::load_async(Some(&path)).await.unwrap();
         assert_eq!(config.read().profile, "async_test");
     }
 
     #[cfg(feature = "logging-tokio")]
     #[tokio::test]
     async fn test_load_async_defaults() {
-        let config =
-            LoggingConfig::load_async(None::<&str>).await.unwrap();
+        let config = LoggingConfig::load_async(None::<&str>).await.unwrap();
         assert_eq!(config.read().version, "1.0");
     }
 
     #[cfg(feature = "logging-tokio")]
     #[tokio::test]
     async fn test_load_async_nonexistent_file() {
-        let result = LoggingConfig::load_async(Some(
-            "/nonexistent/path/config.toml",
-        ))
-        .await;
+        let result = LoggingConfig::load_async(Some("/nonexistent/path/config.toml")).await;
         assert!(result.is_err());
     }
 
@@ -1206,9 +1129,7 @@ type = "Stdout"
     #[cfg(feature = "config")]
     #[test]
     fn test_from_config_error() {
-        let config_err = crate::config::ConfigError::Parse(
-            "bad config".to_string(),
-        );
+        let config_err = crate::config::ConfigError::Parse("bad config".to_string());
         let logging_err: LoggingConfigError = config_err.into();
         let err_str = format!("{logging_err}");
         assert!(err_str.contains("bad config"));
@@ -1238,8 +1159,7 @@ type = "Stdout"
 
     #[test]
     fn test_logging_config_error_config_parse_display() {
-        let source_err =
-            SourceConfigError::Message("test parse error".to_string());
+        let source_err = SourceConfigError::Message("test parse error".to_string());
         let err = LoggingConfigError::ConfigParseError(source_err);
         let display = err.to_string();
         assert!(
@@ -1277,10 +1197,7 @@ type = "Stdout"
         // SAFETY: Test-only env var.
         unsafe { env::set_var(key, "expanded_value") };
         let expanded = config.expand_env_vars();
-        assert_eq!(
-            expanded.env_vars.get(key).unwrap(),
-            "expanded_value"
-        );
+        assert_eq!(expanded.env_vars.get(key).unwrap(), "expanded_value");
         // SAFETY: Cleanup.
         unsafe { env::remove_var(key) };
     }
@@ -1304,19 +1221,13 @@ type = "Stdout"
     #[test]
     fn test_set_log_rotation_invalid() {
         let mut config = LoggingConfig::default();
-        assert!(
-            config.set("log_rotation", "not_valid_rotation").is_err()
-        );
+        assert!(config.set("log_rotation", "not_valid_rotation").is_err());
     }
 
     #[test]
     fn test_set_logging_destinations_invalid() {
         let mut config = LoggingConfig::default();
-        assert!(
-            config
-                .set("logging_destinations", "not_an_array")
-                .is_err()
-        );
+        assert!(config.set("logging_destinations", "not_an_array").is_err());
     }
 
     #[test]
@@ -1345,27 +1256,20 @@ type = "Stdout"
             dir.path().join("test.log").display()
         );
         fs::write(&path, &initial).unwrap();
-        let config =
-            LoggingConfig::load_async(Some(&path)).await.unwrap();
+        let config = LoggingConfig::load_async(Some(&path)).await.unwrap();
         assert_eq!(config.read().profile, "initial");
 
-        let stop = LoggingConfig::hot_reload_async(
-            path.to_str().unwrap(),
-            &config,
-        )
-        .unwrap();
+        let stop = LoggingConfig::hot_reload_async(path.to_str().unwrap(), &config).unwrap();
 
         // Give watcher time to initialize
-        tokio::time::sleep(std::time::Duration::from_millis(200))
-            .await;
+        tokio::time::sleep(std::time::Duration::from_millis(200)).await;
 
         // Modify the file
         let updated = initial.replace("initial", "reloaded");
         fs::write(&path, updated).unwrap();
 
         // Give hot reload time to process
-        tokio::time::sleep(std::time::Duration::from_millis(500))
-            .await;
+        tokio::time::sleep(std::time::Duration::from_millis(500)).await;
 
         // Stop the watcher
         let _ = stop.send(()).await;

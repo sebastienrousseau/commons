@@ -56,17 +56,11 @@ fn parse_rust_log() -> Option<LogLevel> {
     let val = std::env::var("RUST_LOG").ok()?;
     let mut most_permissive: Option<LogLevel> = None;
     for directive in val.split(',') {
-        let level_str = directive
-            .split('=')
-            .next_back()
-            .unwrap_or(directive)
-            .trim();
+        let level_str = directive.split('=').next_back().unwrap_or(directive).trim();
         if let Ok(level) = level_str.parse::<LogLevel>() {
             match most_permissive {
                 None => most_permissive = Some(level),
-                Some(current)
-                    if level.to_numeric() < current.to_numeric() =>
-                {
+                Some(current) if level.to_numeric() < current.to_numeric() => {
                     most_permissive = Some(level);
                 }
                 _ => {}
@@ -96,15 +90,9 @@ pub enum InitError {
 impl fmt::Display for InitError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::LoggerAlreadySet => {
-                f.write_str("a log crate logger was already set")
-            }
-            Self::SubscriberAlreadySet => {
-                f.write_str("a tracing subscriber was already set")
-            }
-            Self::AlreadyInitialized => {
-                f.write_str("logging was already initialized")
-            }
+            Self::LoggerAlreadySet => f.write_str("a log crate logger was already set"),
+            Self::SubscriberAlreadySet => f.write_str("a tracing subscriber was already set"),
+            Self::AlreadyInitialized => f.write_str("logging was already initialized"),
         }
     }
 }
@@ -165,13 +153,9 @@ impl LoggingBuilder {
     /// # Errors
     ///
     /// Returns `InitError::LoggerAlreadySet` if another logger was already registered.
-    pub(crate) fn install_log_facade(
-        format: LogFormat,
-        level: LogLevel,
-    ) -> Result<(), InitError> {
+    pub(crate) fn install_log_facade(format: LogFormat, level: LogLevel) -> Result<(), InitError> {
         let logger = LOGGER.get_or_init(|| LoggingFacade::new(format));
-        log::set_logger(logger)
-            .map_err(|_| InitError::LoggerAlreadySet)?;
+        log::set_logger(logger).map_err(|_| InitError::LoggerAlreadySet)?;
         log::set_max_level(to_log_level_filter(level));
         Ok(())
     }
@@ -181,11 +165,9 @@ impl LoggingBuilder {
     /// # Errors
     ///
     /// Returns `InitError::SubscriberAlreadySet` if another subscriber was already registered.
-    pub(crate) fn install_tracing_subscriber() -> Result<(), InitError>
-    {
+    pub(crate) fn install_tracing_subscriber() -> Result<(), InitError> {
         let subscriber = super::tracing_bridge::LoggingSubscriber::new();
-        let dispatch =
-            tracing_core::dispatcher::Dispatch::new(subscriber);
+        let dispatch = tracing_core::dispatcher::Dispatch::new(subscriber);
         tracing_core::dispatcher::set_global_default(dispatch)
             .map_err(|_| InitError::SubscriberAlreadySet)?;
         Ok(())
@@ -266,19 +248,13 @@ mod tests {
     #[test]
     fn test_init_error_display_logger_already_set() {
         let err = InitError::LoggerAlreadySet;
-        assert_eq!(
-            err.to_string(),
-            "a log crate logger was already set"
-        );
+        assert_eq!(err.to_string(), "a log crate logger was already set");
     }
 
     #[test]
     fn test_init_error_display_subscriber_already_set() {
         let err = InitError::SubscriberAlreadySet;
-        assert_eq!(
-            err.to_string(),
-            "a tracing subscriber was already set"
-        );
+        assert_eq!(err.to_string(), "a tracing subscriber was already set");
     }
 
     #[test]
@@ -314,10 +290,7 @@ mod tests {
         assert!(b.install_log);
         assert!(b.install_tracing);
         // Format is auto-detected (Logfmt for TTY, JSON for pipe/CI)
-        assert!(
-            b.format == LogFormat::JSON
-                || b.format == LogFormat::Logfmt
-        );
+        assert!(b.format == LogFormat::JSON || b.format == LogFormat::Logfmt);
     }
 
     #[test]
@@ -380,10 +353,7 @@ mod tests {
         let b = builder();
         assert_eq!(b.level, LogLevel::INFO);
         // Format is auto-detected based on output context
-        assert!(
-            b.format == LogFormat::JSON
-                || b.format == LogFormat::Logfmt
-        );
+        assert!(b.format == LogFormat::JSON || b.format == LogFormat::Logfmt);
         assert!(b.install_log);
         assert!(b.install_tracing);
     }
@@ -436,8 +406,7 @@ mod tests {
     #[cfg_attr(miri, ignore)]
     fn test_logger_static() {
         // Exercise the LOGGER OnceLock
-        let logger =
-            LOGGER.get_or_init(|| LoggingFacade::new(LogFormat::JSON));
+        let logger = LOGGER.get_or_init(|| LoggingFacade::new(LogFormat::JSON));
         assert!(format!("{logger:?}").contains("LoggingFacade"));
     }
 
@@ -445,19 +414,10 @@ mod tests {
     #[cfg_attr(miri, ignore)]
     fn test_install_log_facade() {
         // First call may succeed or fail (test ordering is non-deterministic)
-        let r1 = LoggingBuilder::install_log_facade(
-            LogFormat::JSON,
-            LogLevel::INFO,
-        );
-        assert!(
-            r1.is_ok()
-                || matches!(r1, Err(InitError::LoggerAlreadySet))
-        );
+        let r1 = LoggingBuilder::install_log_facade(LogFormat::JSON, LogLevel::INFO);
+        assert!(r1.is_ok() || matches!(r1, Err(InitError::LoggerAlreadySet)));
         // Second call should definitely fail
-        let r2 = LoggingBuilder::install_log_facade(
-            LogFormat::MCP,
-            LogLevel::DEBUG,
-        );
+        let r2 = LoggingBuilder::install_log_facade(LogFormat::MCP, LogLevel::DEBUG);
         assert!(matches!(r2, Err(InitError::LoggerAlreadySet)));
     }
 
@@ -466,10 +426,7 @@ mod tests {
     fn test_install_tracing_subscriber() {
         // First call may succeed or fail (test ordering is non-deterministic)
         let r1 = LoggingBuilder::install_tracing_subscriber();
-        assert!(
-            r1.is_ok()
-                || matches!(r1, Err(InitError::SubscriberAlreadySet))
-        );
+        assert!(r1.is_ok() || matches!(r1, Err(InitError::SubscriberAlreadySet)));
         // Second call should definitely fail
         let r2 = LoggingBuilder::install_tracing_subscriber();
         assert!(matches!(r2, Err(InitError::SubscriberAlreadySet)));
@@ -496,10 +453,7 @@ mod tests {
         let format = detect_default_format();
         // In test context stdout is typically not a TTY,
         // so we expect JSON. But TTY could yield Logfmt.
-        assert!(
-            format == LogFormat::JSON
-                || format == LogFormat::Logfmt
-        );
+        assert!(format == LogFormat::JSON || format == LogFormat::Logfmt);
     }
 
     #[test]

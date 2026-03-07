@@ -40,10 +40,8 @@ impl RotatingFile {
     ///
     /// Returns `io::Error` if the file cannot be opened or created.
     pub fn open(path: &Path, policy: LogRotation) -> io::Result<Self> {
-        let file =
-            OpenOptions::new().create(true).append(true).open(path)?;
-        let bytes_written =
-            file.metadata().map(|m| m.len()).unwrap_or(0);
+        let file = OpenOptions::new().create(true).append(true).open(path)?;
+        let bytes_written = file.metadata().map(|m| m.len()).unwrap_or(0);
         Ok(Self {
             file,
             path: path.to_path_buf(),
@@ -60,11 +58,7 @@ impl RotatingFile {
     /// # Errors
     ///
     /// Returns `io::Error` if the write or file rotation fails.
-    pub fn write_batch(
-        &mut self,
-        data: &[u8],
-        event_count: u32,
-    ) -> io::Result<()> {
+    pub fn write_batch(&mut self, data: &[u8], event_count: u32) -> io::Result<()> {
         self.file.write_all(data)?;
         self.bytes_written += data.len() as u64;
         self.events_written += event_count;
@@ -78,18 +72,10 @@ impl RotatingFile {
     /// Checks whether the current file should be rotated.
     fn should_rotate(&self) -> bool {
         match self.policy {
-            LogRotation::Size(max_bytes) => {
-                self.bytes_written >= max_bytes.get()
-            }
-            LogRotation::Time(seconds) => {
-                self.opened_at.elapsed().as_secs() >= seconds.get()
-            }
-            LogRotation::Date => {
-                today_date_string() != self.opened_date
-            }
-            LogRotation::Count(max_events) => {
-                self.events_written >= max_events
-            }
+            LogRotation::Size(max_bytes) => self.bytes_written >= max_bytes.get(),
+            LogRotation::Time(seconds) => self.opened_at.elapsed().as_secs() >= seconds.get(),
+            LogRotation::Date => today_date_string() != self.opened_date,
+            LogRotation::Count(max_events) => self.events_written >= max_events,
         }
     }
 
@@ -109,10 +95,7 @@ impl RotatingFile {
                 ext.to_string_lossy()
             ))
         } else {
-            PathBuf::from(format!(
-                "{}.{timestamp}",
-                self.path.display()
-            ))
+            PathBuf::from(format!("{}.{timestamp}", self.path.display()))
         };
 
         fs::rename(&self.path, &rotated_name)?;
@@ -244,8 +227,7 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("time.log");
         // Use 1-second threshold
-        let policy =
-            LogRotation::Time(NonZeroU64::new(1).unwrap());
+        let policy = LogRotation::Time(NonZeroU64::new(1).unwrap());
         let mut rf = RotatingFile::open(&path, policy).unwrap();
         rf.write_batch(b"initial\n", 1).unwrap();
         // Wait just over 1 second so elapsed >= 1
@@ -320,10 +302,6 @@ mod tests {
             .unwrap()
             .filter_map(Result::ok)
             .collect();
-        assert_eq!(
-            entries.len(),
-            1,
-            "should not rotate on the same day"
-        );
+        assert_eq!(entries.len(), 1, "should not rotate on the same day");
     }
 }

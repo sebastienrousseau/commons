@@ -389,10 +389,7 @@ mod tests {
     #[test]
     fn test_config_error_display_parse() {
         let err = ConfigError::Parse("invalid syntax".into());
-        assert_eq!(
-            err.to_string(),
-            "Failed to parse config: invalid syntax"
-        );
+        assert_eq!(err.to_string(), "Failed to parse config: invalid syntax");
     }
 
     #[test]

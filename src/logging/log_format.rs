@@ -20,10 +20,8 @@ static CLF_REGEX: LazyLock<Regex> = LazyLock::new(|| {
 });
 
 static CEF_REGEX: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(
-        r"^CEF:\d+\|[^|]+\|[^|]+\|[^|]+\|[^|]+\|[^|]+\|[^|]+\|.*$",
-    )
-    .expect("Failed to compile CEF regex")
+    Regex::new(r"^CEF:\d+\|[^|]+\|[^|]+\|[^|]+\|[^|]+\|[^|]+\|[^|]+\|.*$")
+        .expect("Failed to compile CEF regex")
 });
 
 static W3C_REGEX: LazyLock<Regex> = LazyLock::new(|| {
@@ -35,9 +33,7 @@ static W3C_REGEX: LazyLock<Regex> = LazyLock::new(|| {
 });
 
 /// `LogFormat` is an enum representing the different structured log formats.
-#[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize,
-)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum LogFormat {
     /// Common Log Format (CLF)
     CLF,
@@ -131,15 +127,9 @@ impl LogFormat {
             | Self::NDJSON
             | Self::MCP
             | Self::OTLP
-            | Self::ECS => {
-                serde_json::from_str::<serde_json::Value>(entry).is_ok()
-            }
-            Self::Logfmt => {
-                entry.contains('=') && !entry.starts_with('=')
-            }
-            Self::Log4jXML => {
-                entry.contains("<log4j:event") && entry.contains('>')
-            }
+            | Self::ECS => serde_json::from_str::<serde_json::Value>(entry).is_ok(),
+            Self::Logfmt => entry.contains('=') && !entry.starts_with('='),
+            Self::Log4jXML => entry.contains("<log4j:event") && entry.contains('>'),
             Self::ELF | Self::ApacheAccessLog => true,
         }
     }
@@ -172,17 +162,10 @@ impl LogFormat {
             | Self::MCP
             | Self::OTLP
             | Self::ECS => {
-                let val = serde_json::from_str::<serde_json::Value>(
-                    &sanitized_entry,
-                )
-                .map_err(|e| {
-                    LoggingError::FormattingError(format!(
-                        "Invalid JSON: {e}"
-                    ))
-                })?;
-                Ok(serde_json::to_string_pretty(&val).expect(
-                    "serde_json::to_string_pretty cannot fail on a valid Value",
-                ))
+                let val = serde_json::from_str::<serde_json::Value>(&sanitized_entry)
+                    .map_err(|e| LoggingError::FormattingError(format!("Invalid JSON: {e}")))?;
+                Ok(serde_json::to_string_pretty(&val)
+                    .expect("serde_json::to_string_pretty cannot fail on a valid Value"))
             }
         }
     }
@@ -263,10 +246,7 @@ mod tests {
 
     #[test]
     fn test_from_str_ndjson() {
-        assert_eq!(
-            LogFormat::from_str("ndjson").unwrap(),
-            LogFormat::NDJSON
-        );
+        assert_eq!(LogFormat::from_str("ndjson").unwrap(), LogFormat::NDJSON);
     }
 
     #[test]
@@ -281,10 +261,7 @@ mod tests {
 
     #[test]
     fn test_from_str_logfmt() {
-        assert_eq!(
-            LogFormat::from_str("logfmt").unwrap(),
-            LogFormat::Logfmt
-        );
+        assert_eq!(LogFormat::from_str("logfmt").unwrap(), LogFormat::Logfmt);
     }
 
     #[test]
@@ -335,10 +312,7 @@ mod tests {
 
     #[test]
     fn test_display_apache_access_log() {
-        assert_eq!(
-            LogFormat::ApacheAccessLog.to_string(),
-            "Apache Access Log"
-        );
+        assert_eq!(LogFormat::ApacheAccessLog.to_string(), "Apache Access Log");
     }
 
     #[test]
@@ -400,17 +374,15 @@ mod tests {
             LogFormat::ECS,
         ];
         for fmt in &formats {
-            assert!(
-                !fmt.validate(""),
-                "{fmt} should reject empty strings"
-            );
+            assert!(!fmt.validate(""), "{fmt} should reject empty strings");
         }
     }
 
     // -- CLF --
     #[test]
     fn test_validate_clf_valid() {
-        let entry = r#"127.0.0.1 - - [10/Oct/2000:13:55:36 -0700] "GET /apache_pb.gif HTTP/1.0" 200 2326"#;
+        let entry =
+            r#"127.0.0.1 - - [10/Oct/2000:13:55:36 -0700] "GET /apache_pb.gif HTTP/1.0" 200 2326"#;
         assert!(LogFormat::CLF.validate(entry));
     }
 
@@ -433,8 +405,7 @@ mod tests {
     // -- CEF --
     #[test]
     fn test_validate_cef_valid() {
-        let entry =
-            "CEF:0|vendor|product|1.0|100|Test Event|5|key=value";
+        let entry = "CEF:0|vendor|product|1.0|100|Test Event|5|key=value";
         assert!(LogFormat::CEF.validate(entry));
     }
 
@@ -458,8 +429,7 @@ mod tests {
     // -- GELF (JSON) --
     #[test]
     fn test_validate_gelf_valid() {
-        let entry =
-            r#"{"version":"1.1","host":"test","short_message":"hello"}"#;
+        let entry = r#"{"version":"1.1","host":"test","short_message":"hello"}"#;
         assert!(LogFormat::GELF.validate(entry));
     }
 
@@ -471,9 +441,7 @@ mod tests {
     // -- Logstash (JSON) --
     #[test]
     fn test_validate_logstash_valid() {
-        assert!(
-            LogFormat::Logstash.validate(r#"{"@timestamp":"2024-01-01","message":"hi"}"#)
-        );
+        assert!(LogFormat::Logstash.validate(r#"{"@timestamp":"2024-01-01","message":"hi"}"#));
     }
 
     #[test]

@@ -631,11 +631,7 @@ mod tests {
         let result = retry(config, || {
             let n = attempts.get();
             attempts.set(n + 1);
-            if n < 2 {
-                Err("retry")
-            } else {
-                Ok("success")
-            }
+            if n < 2 { Err("retry") } else { Ok("success") }
         });
 
         assert!(result.is_ok());
@@ -657,11 +653,7 @@ mod tests {
         let result = retry_with_context(config, |_attempt| {
             let n = attempts.get();
             attempts.set(n + 1);
-            if n < 1 {
-                Err("not yet")
-            } else {
-                Ok("ok")
-            }
+            if n < 1 { Err("not yet") } else { Ok("ok") }
         });
         assert!(result.is_ok());
         assert_eq!(result.attempts, 2);

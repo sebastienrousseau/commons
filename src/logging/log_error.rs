@@ -125,7 +125,9 @@ pub enum LoggingError {
         feature = "logging-miette",
         diagnostic(
             code(logging::native_sink_failure),
-            help("Check if systemd-journald is running (Linux). Ensure RLG_FALLBACK_STDOUT is set to bypass native hooks.")
+            help(
+                "Check if systemd-journald is running (Linux). Ensure RLG_FALLBACK_STDOUT is set to bypass native hooks."
+            )
         )
     )]
     NativeSinkError(String),
@@ -154,12 +156,8 @@ mod tests {
 
     #[test]
     fn test_error_display() {
-        let err =
-            LoggingError::FormatParseError("Invalid format".to_string());
-        assert_eq!(
-            err.to_string(),
-            "Log format parse error: Invalid format"
-        );
+        let err = LoggingError::FormatParseError("Invalid format".to_string());
+        assert_eq!(err.to_string(), "Log format parse error: Invalid format");
     }
 
     #[test]
@@ -170,8 +168,7 @@ mod tests {
 
     #[test]
     fn test_common_error_conversion() {
-        let common_err =
-            crate::error::CommonError::custom("test");
+        let common_err = crate::error::CommonError::custom("test");
         let logging_err: LoggingError = common_err.into();
         assert!(matches!(logging_err, LoggingError::Custom(_)));
         assert!(logging_err.to_string().contains("test"));
@@ -179,8 +176,7 @@ mod tests {
 
     #[test]
     fn test_io_error_variant() {
-        let io_err =
-            io::Error::new(io::ErrorKind::NotFound, "file missing");
+        let io_err = io::Error::new(io::ErrorKind::NotFound, "file missing");
         let logging_err: LoggingError = io_err.into();
         assert!(matches!(logging_err, LoggingError::IoError(_)));
         assert!(logging_err.to_string().contains("file missing"));

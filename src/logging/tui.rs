@@ -37,18 +37,14 @@ const LEVEL_BAR_WIDTH: usize = 10;
 /// This function does not panic.
 #[must_use]
 pub fn get_terminal_height_of(handle: &impl std::os::fd::AsFd) -> u16 {
-    terminal_size::terminal_size_of(handle).map_or(
-        DEFAULT_TERMINAL_HEIGHT,
-        |(_, terminal_size::Height(h))| h,
-    )
+    terminal_size::terminal_size_of(handle)
+        .map_or(DEFAULT_TERMINAL_HEIGHT, |(_, terminal_size::Height(h))| h)
 }
 
 #[cfg(feature = "logging-tui")]
 fn get_terminal_height() -> u16 {
-    terminal_size::terminal_size().map_or(
-        DEFAULT_TERMINAL_HEIGHT,
-        |(_, terminal_size::Height(h))| h,
-    )
+    terminal_size::terminal_size()
+        .map_or(DEFAULT_TERMINAL_HEIGHT, |(_, terminal_size::Height(h))| h)
 }
 
 #[cfg(not(feature = "logging-tui"))]
@@ -230,10 +226,7 @@ impl TuiMetrics {
 /// Returns the terminal width, or `DEFAULT_TERMINAL_WIDTH` as fallback.
 #[cfg(feature = "logging-tui")]
 fn get_terminal_width() -> u16 {
-    terminal_size::terminal_size().map_or(
-        DEFAULT_TERMINAL_WIDTH,
-        |(terminal_size::Width(w), _)| w,
-    )
+    terminal_size::terminal_size().map_or(DEFAULT_TERMINAL_WIDTH, |(terminal_size::Width(w), _)| w)
 }
 
 /// Returns the default terminal width when the `logging-tui` feature is disabled.
@@ -244,15 +237,11 @@ fn get_terminal_width() -> u16 {
 
 /// Sparkline characters indexed by intensity (0..=7).
 const SPARK_CHARS: [char; 8] = [
-    '\u{2581}', '\u{2582}', '\u{2583}', '\u{2584}', '\u{2585}',
-    '\u{2586}', '\u{2587}', '\u{2588}',
+    '\u{2581}', '\u{2582}', '\u{2583}', '\u{2584}', '\u{2585}', '\u{2586}', '\u{2587}', '\u{2588}',
 ];
 
 /// Renders a sparkline string from a circular buffer of throughput samples.
-fn render_sparkline(
-    ring: &[usize; SPARKLINE_RING_SIZE],
-    cursor: usize,
-) -> String {
+fn render_sparkline(ring: &[usize; SPARKLINE_RING_SIZE], cursor: usize) -> String {
     let max_val = ring.iter().copied().max().unwrap_or(1).max(1);
     let mut out = String::with_capacity(SPARKLINE_RING_SIZE);
     for i in 0..SPARKLINE_RING_SIZE {
@@ -268,8 +257,7 @@ fn render_level_bar(count: usize, total: usize) -> String {
     if total == 0 {
         return "\u{2591}".repeat(LEVEL_BAR_WIDTH);
     }
-    let filled =
-        ((count * LEVEL_BAR_WIDTH) / total).min(LEVEL_BAR_WIDTH);
+    let filled = ((count * LEVEL_BAR_WIDTH) / total).min(LEVEL_BAR_WIDTH);
     let mut bar = String::with_capacity(LEVEL_BAR_WIDTH * 3);
     for _ in 0..filled {
         bar.push('\u{2588}');
@@ -327,9 +315,7 @@ pub fn build_fmt_line(metrics: &TuiMetrics) -> String {
 /// Computes level bar rendering from metrics.
 ///
 /// Returns `(info_bar, info_pct, error_bar, error_pct)`.
-pub fn compute_level_bars(
-    metrics: &TuiMetrics,
-) -> (String, usize, String, usize) {
+pub fn compute_level_bars(metrics: &TuiMetrics) -> (String, usize, String, usize) {
     let info_c = metrics.level_info.load(Ordering::Relaxed);
     let warn_c = metrics.level_warn.load(Ordering::Relaxed);
     let error_c = metrics.level_error.load(Ordering::Relaxed);
@@ -388,28 +374,21 @@ pub fn render_tick(
         .duration_since(std::time::UNIX_EPOCH)
         .unwrap_or_default()
         .as_secs() as usize;
-    let uptime_secs = now_secs.saturating_sub(
-        metrics.start_epoch_secs.load(Ordering::Relaxed),
-    );
+    let uptime_secs = now_secs.saturating_sub(metrics.start_epoch_secs.load(Ordering::Relaxed));
     let uptime = format_uptime(uptime_secs as u64);
 
     // Level bars
-    let (info_bar, info_pct, error_bar, error_pct) =
-        compute_level_bars(metrics);
+    let (info_bar, info_pct, error_bar, error_pct) = compute_level_bars(metrics);
 
     // Format counts line
     let fmt_line = build_fmt_line(metrics);
 
-    let sparkline = render_sparkline(
-        sparkline_ring,
-        *spark_cursor % SPARKLINE_RING_SIZE,
-    );
+    let sparkline = render_sparkline(sparkline_ring, *spark_cursor % SPARKLINE_RING_SIZE);
 
     let total_fmt = format_with_commas(total);
 
     let width = get_terminal_width() as usize;
-    let separator: String =
-        "\u{2500}".repeat(width.min(SPARKLINE_RING_SIZE));
+    let separator: String = "\u{2500}".repeat(width.min(SPARKLINE_RING_SIZE));
 
     let height = get_terminal_height();
 
@@ -430,10 +409,7 @@ pub fn render_tick(
 /// # Panics
 ///
 /// This function panics if the TUI background thread fails to spawn.
-pub fn spawn_tui_thread(
-    metrics: Arc<TuiMetrics>,
-    shutdown_flag: Arc<AtomicBool>,
-) {
+pub fn spawn_tui_thread(metrics: Arc<TuiMetrics>, shutdown_flag: Arc<AtomicBool>) {
     // Record engine start time
     #[allow(clippy::cast_possible_truncation)]
     let start = std::time::SystemTime::now()
@@ -454,9 +430,7 @@ pub fn spawn_tui_thread(
                     break;
                 }
 
-                thread::sleep(Duration::from_millis(
-                    TUI_TICK_INTERVAL_MS,
-                ));
+                thread::sleep(Duration::from_millis(TUI_TICK_INTERVAL_MS));
 
                 let frame = render_tick(
                     &metrics,
@@ -698,10 +672,7 @@ mod tests {
     fn test_tui_metrics_start_epoch() {
         let m = TuiMetrics::default();
         m.start_epoch_secs.store(1_234_567_890, Ordering::Relaxed);
-        assert_eq!(
-            m.start_epoch_secs.load(Ordering::Relaxed),
-            1_234_567_890
-        );
+        assert_eq!(m.start_epoch_secs.load(Ordering::Relaxed), 1_234_567_890);
     }
 
     #[test]
@@ -762,8 +733,7 @@ mod tests {
     #[test]
     fn test_compute_level_bars_empty() {
         let m = TuiMetrics::default();
-        let (info_bar, info_pct, error_bar, error_pct) =
-            compute_level_bars(&m);
+        let (info_bar, info_pct, error_bar, error_pct) = compute_level_bars(&m);
         assert_eq!(info_pct, 0);
         assert_eq!(error_pct, 0);
         assert_eq!(info_bar.chars().count(), 10);
@@ -775,17 +745,14 @@ mod tests {
         let m = TuiMetrics::default();
         m.level_info.store(80, Ordering::Relaxed);
         m.level_error.store(20, Ordering::Relaxed);
-        let (info_bar, info_pct, error_bar, error_pct) =
-            compute_level_bars(&m);
+        let (info_bar, info_pct, error_bar, error_pct) = compute_level_bars(&m);
         assert_eq!(info_pct, 80);
         assert_eq!(error_pct, 20);
         // info_bar should have 8 filled blocks
-        let filled =
-            info_bar.chars().filter(|&c| c == '\u{2588}').count();
+        let filled = info_bar.chars().filter(|&c| c == '\u{2588}').count();
         assert_eq!(filled, 8);
         // error_bar should have 2 filled blocks
-        let filled =
-            error_bar.chars().filter(|&c| c == '\u{2588}').count();
+        let filled = error_bar.chars().filter(|&c| c == '\u{2588}').count();
         assert_eq!(filled, 2);
     }
 
@@ -797,8 +764,7 @@ mod tests {
         m.level_error.store(10, Ordering::Relaxed);
         m.level_debug.store(15, Ordering::Relaxed);
         m.level_trace.store(5, Ordering::Relaxed);
-        let (_info_bar, info_pct, _error_bar, error_pct) =
-            compute_level_bars(&m);
+        let (_info_bar, info_pct, _error_bar, error_pct) = compute_level_bars(&m);
         assert_eq!(info_pct, 50);
         assert_eq!(error_pct, 10);
     }
@@ -825,8 +791,7 @@ mod tests {
         let mut ring = [0_usize; SPARKLINE_RING_SIZE];
         let mut cursor = 0_usize;
 
-        let frame =
-            render_tick(&m, &mut last_total, &mut ring, &mut cursor);
+        let frame = render_tick(&m, &mut last_total, &mut ring, &mut cursor);
         assert!(frame.contains("Logging Dashboard"));
         assert!(frame.contains("Errors:"));
         assert!(frame.contains("Active Spans:"));
@@ -849,8 +814,7 @@ mod tests {
         let mut ring = [0_usize; SPARKLINE_RING_SIZE];
         let mut cursor = 0_usize;
 
-        let _ =
-            render_tick(&m, &mut last_total, &mut ring, &mut cursor);
+        let _ = render_tick(&m, &mut last_total, &mut ring, &mut cursor);
 
         // last_total should be updated
         assert_eq!(last_total, 100);
@@ -872,8 +836,7 @@ mod tests {
         let mut ring = [0_usize; SPARKLINE_RING_SIZE];
         let mut cursor = 0_usize;
 
-        let _ =
-            render_tick(&m, &mut last_total, &mut ring, &mut cursor);
+        let _ = render_tick(&m, &mut last_total, &mut ring, &mut cursor);
         assert_eq!(m.throughput.load(Ordering::Relaxed), 0);
     }
 
@@ -888,14 +851,12 @@ mod tests {
 
         // First tick: 100 events => tps = 6000
         m.total_events.store(100, Ordering::Relaxed);
-        let _ =
-            render_tick(&m, &mut last_total, &mut ring, &mut cursor);
+        let _ = render_tick(&m, &mut last_total, &mut ring, &mut cursor);
         assert_eq!(m.peak_throughput.load(Ordering::Relaxed), 6000);
 
         // Second tick: 50 more events => tps = 3000
         m.total_events.store(150, Ordering::Relaxed);
-        let _ =
-            render_tick(&m, &mut last_total, &mut ring, &mut cursor);
+        let _ = render_tick(&m, &mut last_total, &mut ring, &mut cursor);
         // Peak should still be 6000
         assert_eq!(m.peak_throughput.load(Ordering::Relaxed), 6000);
     }
@@ -909,8 +870,7 @@ mod tests {
         let mut ring = [0_usize; SPARKLINE_RING_SIZE];
         let mut cursor = 0_usize;
 
-        let frame =
-            render_tick(&m, &mut last_total, &mut ring, &mut cursor);
+        let frame = render_tick(&m, &mut last_total, &mut ring, &mut cursor);
         assert!(frame.contains("(none)"));
     }
 
@@ -939,8 +899,7 @@ mod tests {
         let mut ring = [0_usize; SPARKLINE_RING_SIZE];
         let mut cursor = 0_usize;
 
-        let frame =
-            render_tick(&m, &mut last_total, &mut ring, &mut cursor);
+        let frame = render_tick(&m, &mut last_total, &mut ring, &mut cursor);
         assert!(frame.contains("Dropped:"));
         assert!(frame.contains("42"));
     }

@@ -101,10 +101,7 @@ pub async fn is_file_writable(path: &Path) -> LoggingResult<bool> {
 /// This function returns an error if the file cannot be opened, or if
 /// the seek or write operations fail.
 #[cfg(feature = "logging-tokio")]
-pub async fn truncate_file(
-    path: &Path,
-    size: u64,
-) -> std::io::Result<()> {
+pub async fn truncate_file(path: &Path, size: u64) -> std::io::Result<()> {
     let mut file = OpenOptions::new()
         .read(true)
         .write(true)
@@ -185,8 +182,7 @@ pub fn format_file_size(size: u64) -> String {
 ///
 /// This function returns an error if the datetime string cannot be parsed.
 pub fn parse_datetime(datetime_str: &str) -> LoggingResult<DateTime> {
-    DateTime::parse(datetime_str)
-        .map_err(|e| super::log_error::LoggingError::custom(e.to_string()))
+    DateTime::parse(datetime_str).map_err(|e| super::log_error::LoggingError::custom(e.to_string()))
 }
 
 /// Generates a highly unique, 16-character pseudo-random hex string suitable for OTLP span IDs.
@@ -255,7 +251,10 @@ mod tests {
     fn test_generate_timestamp_contains_date_like_content() {
         let ts = generate_timestamp();
         // ISO 8601 timestamps contain hyphens (date separators) and colons (time separators).
-        assert!(ts.contains('-'), "timestamp should contain date separators: {ts}");
+        assert!(
+            ts.contains('-'),
+            "timestamp should contain date separators: {ts}"
+        );
     }
 
     // ---- sanitize_log_message ----
@@ -352,7 +351,10 @@ mod tests {
     #[test]
     fn test_parse_datetime_valid_iso8601() {
         let result = parse_datetime("2024-01-15T10:30:00+00:00");
-        assert!(result.is_ok(), "Expected Ok for valid ISO 8601, got {result:?}");
+        assert!(
+            result.is_ok(),
+            "Expected Ok for valid ISO 8601, got {result:?}"
+        );
     }
 
     #[test]
@@ -373,7 +375,12 @@ mod tests {
     #[test]
     fn test_generate_span_id_length() {
         let id = generate_span_id();
-        assert_eq!(id.len(), 16, "span ID should be 16 characters, got {}", id.len());
+        assert_eq!(
+            id.len(),
+            16,
+            "span ID should be 16 characters, got {}",
+            id.len()
+        );
     }
 
     #[cfg(feature = "id")]
@@ -400,7 +407,12 @@ mod tests {
     #[test]
     fn test_generate_trace_id_length() {
         let id = generate_trace_id();
-        assert_eq!(id.len(), 32, "trace ID should be 32 characters, got {}", id.len());
+        assert_eq!(
+            id.len(),
+            32,
+            "trace ID should be 32 characters, got {}",
+            id.len()
+        );
     }
 
     #[cfg(feature = "id")]

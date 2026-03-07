@@ -4,48 +4,48 @@
 
 //! Near-lock-free structured logging engine.
 
-/// Severity levels for structured logging.
-pub mod log_level;
-/// Structured output formats (JSON, MCP, OTLP, ECS, CEF, ...).
-pub mod log_format;
-/// Error types for the logging pipeline.
-pub mod log_error;
-/// TOML-based configuration: loading, validation, diffing, and hot-reload.
-pub mod log_config;
 /// Near-lock-free ingestion engine backed by a bounded ring buffer.
 pub mod engine;
-/// Structured log entry with a chainable builder API.
-pub mod log_entry;
 /// One-call initialization for the logging engine.
 pub mod init;
+/// TOML-based configuration: loading, validation, diffing, and hot-reload.
+pub mod log_config;
+/// Structured log entry with a chainable builder API.
+pub mod log_entry;
+/// Error types for the logging pipeline.
+pub mod log_error;
+/// Structured output formats (JSON, MCP, OTLP, ECS, CEF, ...).
+pub mod log_format;
+/// Severity levels for structured logging.
+pub mod log_level;
 /// Bridge from the `log` crate facade into the logging engine.
 pub mod logger;
-/// Platform-native logging sinks.
-pub mod sink;
-/// Log rotation policies: size, time, date, and count-based.
-pub mod rotation;
-/// Integration with the `tracing` ecosystem.
-pub mod tracing_bridge;
-/// Utility functions for the logging pipeline.
-pub mod utils;
-/// Opt-in terminal dashboard for live observability metrics.
-pub mod tui;
 /// Convenience macros for span tracking, latency profiling, and MCP notifications.
 pub mod macros;
+/// Log rotation policies: size, time, date, and count-based.
+pub mod rotation;
+/// Platform-native logging sinks.
+pub mod sink;
+/// Integration with the `tracing` ecosystem.
+pub mod tracing_bridge;
+/// Opt-in terminal dashboard for live observability metrics.
+pub mod tui;
+/// Utility functions for the logging pipeline.
+pub mod utils;
 
 // Re-exports
-pub use log_level::{LogLevel, ParseLogLevelError};
-pub use log_format::LogFormat;
-pub use log_error::{LoggingError, LoggingResult};
-pub use log_config::{LoggingConfig, LoggingConfigError, LogRotation, LoggingDestination};
-pub use log_entry::Log;
-pub use engine::{LockFreeEngine, LogEvent, ENGINE, FastSerializer};
+pub use engine::{ENGINE, FastSerializer, LockFreeEngine, LogEvent};
 pub use init::{FlushGuard, InitError, LoggingBuilder, builder, init};
+pub use log_config::{LogRotation, LoggingConfig, LoggingConfigError, LoggingDestination};
+pub use log_entry::Log;
+pub use log_error::{LoggingError, LoggingResult};
+pub use log_format::LogFormat;
+pub use log_level::{LogLevel, ParseLogLevelError};
 pub use logger::LoggingFacade;
 pub use sink::PlatformSink;
-pub use tracing_bridge::LoggingSubscriber;
 #[cfg(feature = "logging-tracing-layer")]
 pub use tracing_bridge::LoggingLayer;
+pub use tracing_bridge::LoggingSubscriber;
 
 // ---------------------------------------------------------------------------
 // Legacy simple logger (backward-compatible re-export)

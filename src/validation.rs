@@ -545,10 +545,7 @@ mod tests {
 
     #[test]
     fn test_validation_error_display_too_short() {
-        let err = ValidationError::TooShort {
-            min: 5,
-            actual: 2,
-        };
+        let err = ValidationError::TooShort { min: 5, actual: 2 };
         assert_eq!(err.to_string(), "Value too short: minimum 5, got 2");
     }
 
@@ -584,10 +581,7 @@ mod tests {
         let err = ValidationError::InvalidPattern {
             pattern: "^[a-z]+$".to_string(),
         };
-        assert_eq!(
-            err.to_string(),
-            "Value doesn't match pattern: ^[a-z]+$"
-        );
+        assert_eq!(err.to_string(), "Value doesn't match pattern: ^[a-z]+$");
     }
 
     #[test]
@@ -595,10 +589,7 @@ mod tests {
         let err = ValidationError::NotInSet {
             allowed: vec!["a".to_string(), "b".to_string()],
         };
-        assert_eq!(
-            err.to_string(),
-            "Value not in allowed set: [\"a\", \"b\"]"
-        );
+        assert_eq!(err.to_string(), "Value not in allowed set: [\"a\", \"b\"]");
     }
 
     #[test]

@@ -45,25 +45,14 @@ impl LoggingSubscriber {
 
 impl Subscriber for LoggingSubscriber {
     fn enabled(&self, metadata: &Metadata<'_>) -> bool {
-        map_tracing_level(*metadata.level()).to_numeric()
-            >= super::engine::ENGINE.filter_level()
+        map_tracing_level(*metadata.level()).to_numeric() >= super::engine::ENGINE.filter_level()
     }
 
-    fn new_span(
-        &self,
-        _span: &tracing_core::span::Attributes<'_>,
-    ) -> tracing_core::span::Id {
-        tracing_core::span::Id::from_u64(
-            SPAN_ID_COUNTER.fetch_add(1, Ordering::Relaxed),
-        )
+    fn new_span(&self, _span: &tracing_core::span::Attributes<'_>) -> tracing_core::span::Id {
+        tracing_core::span::Id::from_u64(SPAN_ID_COUNTER.fetch_add(1, Ordering::Relaxed))
     }
 
-    fn record(
-        &self,
-        _span: &tracing_core::span::Id,
-        _values: &tracing_core::span::Record<'_>,
-    ) {
-    }
+    fn record(&self, _span: &tracing_core::span::Id, _values: &tracing_core::span::Record<'_>) {}
 
     fn record_follows_from(
         &self,
@@ -80,8 +69,7 @@ impl Subscriber for LoggingSubscriber {
         event.record(&mut visitor);
 
         let mut log = Log::build(level, &visitor.message);
-        log.component =
-            std::borrow::Cow::Owned(metadata.target().to_string());
+        log.component = std::borrow::Cow::Owned(metadata.target().to_string());
 
         for (key, value) in visitor.fields {
             log = log.with(&key, value);
@@ -104,10 +92,8 @@ struct LoggingVisitor {
 macro_rules! impl_record_field {
     ($method:ident, $ty:ty) => {
         fn $method(&mut self, field: &Field, value: $ty) {
-            self.fields.insert(
-                field.name().to_string(),
-                serde_json::json!(value),
-            );
+            self.fields
+                .insert(field.name().to_string(), serde_json::json!(value));
         }
     };
     (stringify $method:ident, $ty:ty) => {
@@ -121,11 +107,7 @@ macro_rules! impl_record_field {
 }
 
 impl Visit for LoggingVisitor {
-    fn record_debug(
-        &mut self,
-        field: &Field,
-        value: &dyn std::fmt::Debug,
-    ) {
+    fn record_debug(&mut self, field: &Field, value: &dyn std::fmt::Debug) {
         if field.name() == "message" {
             self.message = format!("{value:?}");
         } else {
@@ -140,18 +122,12 @@ impl Visit for LoggingVisitor {
         if field.name() == "message" {
             self.message = value.to_string();
         } else {
-            self.fields.insert(
-                field.name().to_string(),
-                serde_json::json!(value),
-            );
+            self.fields
+                .insert(field.name().to_string(), serde_json::json!(value));
         }
     }
 
-    fn record_error(
-        &mut self,
-        field: &Field,
-        value: &(dyn std::error::Error + 'static),
-    ) {
+    fn record_error(&mut self, field: &Field, value: &(dyn std::error::Error + 'static)) {
         self.fields.insert(
             field.name().to_string(),
             serde_json::json!(value.to_string()),
@@ -210,10 +186,7 @@ impl LoggingLayer {
 
     /// Sets the log output format for this layer.
     #[must_use]
-    pub const fn with_format(
-        mut self,
-        format: super::log_format::LogFormat,
-    ) -> Self {
+    pub const fn with_format(mut self, format: super::log_format::LogFormat) -> Self {
         self.format = format;
         self
     }
@@ -222,23 +195,17 @@ impl LoggingLayer {
 #[cfg(feature = "logging-tracing-layer")]
 impl<S> tracing_subscriber::Layer<S> for LoggingLayer
 where
-    S: Subscriber
-        + for<'lookup> tracing_subscriber::registry::LookupSpan<'lookup>,
+    S: Subscriber + for<'lookup> tracing_subscriber::registry::LookupSpan<'lookup>,
 {
     fn enabled(
         &self,
         metadata: &Metadata<'_>,
         _ctx: tracing_subscriber::layer::Context<'_, S>,
     ) -> bool {
-        map_tracing_level(*metadata.level()).to_numeric()
-            >= super::engine::ENGINE.filter_level()
+        map_tracing_level(*metadata.level()).to_numeric() >= super::engine::ENGINE.filter_level()
     }
 
-    fn on_event(
-        &self,
-        event: &Event<'_>,
-        _ctx: tracing_subscriber::layer::Context<'_, S>,
-    ) {
+    fn on_event(&self, event: &Event<'_>, _ctx: tracing_subscriber::layer::Context<'_, S>) {
         let metadata = event.metadata();
         let level = map_tracing_level(*metadata.level());
 
@@ -246,8 +213,7 @@ where
         event.record(&mut visitor);
 
         let mut log = Log::build(level, &visitor.message);
-        log.component =
-            std::borrow::Cow::Owned(metadata.target().to_string());
+        log.component = std::borrow::Cow::Owned(metadata.target().to_string());
         log.format = self.format;
 
         for (key, value) in visitor.fields {
@@ -300,18 +266,13 @@ mod tests {
     static CS_EN: TestCallsite = TestCallsite;
 
     static CS_NS: TestCallsite = TestCallsite;
-    static FS_NS: FieldSet =
-        FieldSet::new(&[], tracing_core::identify_callsite!(&CS_NS));
+    static FS_NS: FieldSet = FieldSet::new(&[], tracing_core::identify_callsite!(&CS_NS));
 
     static CS_RN: TestCallsite = TestCallsite;
-    static FS_RN: FieldSet =
-        FieldSet::new(&[], tracing_core::identify_callsite!(&CS_RN));
+    static FS_RN: FieldSet = FieldSet::new(&[], tracing_core::identify_callsite!(&CS_RN));
 
     static CS_EV: TestCallsite = TestCallsite;
-    static FS_EV: FieldSet = FieldSet::new(
-        &["message"],
-        tracing_core::identify_callsite!(&CS_EV),
-    );
+    static FS_EV: FieldSet = FieldSet::new(&["message"], tracing_core::identify_callsite!(&CS_EV));
 
     // ---- map_tracing_level ----
 
@@ -374,17 +335,16 @@ mod tests {
     #[test]
     #[cfg_attr(miri, ignore)]
     fn test_subscriber_enabled() {
-        static META_EN: std::sync::LazyLock<Metadata<'static>> =
-            std::sync::LazyLock::new(|| {
-                tracing_core::metadata!(
-                    name: "test_en",
-                    target: "test_target",
-                    level: Level::ERROR,
-                    fields: &[],
-                    callsite: &CS_EN,
-                    kind: Kind::EVENT,
-                )
-            });
+        static META_EN: std::sync::LazyLock<Metadata<'static>> = std::sync::LazyLock::new(|| {
+            tracing_core::metadata!(
+                name: "test_en",
+                target: "test_target",
+                level: Level::ERROR,
+                fields: &[],
+                callsite: &CS_EN,
+                kind: Kind::EVENT,
+            )
+        });
         let sub = LoggingSubscriber::new();
         assert!(sub.enabled(&META_EN));
     }
@@ -394,25 +354,22 @@ mod tests {
     #[test]
     #[cfg_attr(miri, ignore)]
     fn test_subscriber_new_span_unique_ids() {
-        static META_NS: std::sync::LazyLock<Metadata<'static>> =
-            std::sync::LazyLock::new(|| {
-                tracing_core::metadata!(
-                    name: "test_ns",
-                    target: "test_target",
-                    level: Level::INFO,
-                    fields: &[],
-                    callsite: &CS_NS,
-                    kind: Kind::SPAN,
-                )
-            });
+        static META_NS: std::sync::LazyLock<Metadata<'static>> = std::sync::LazyLock::new(|| {
+            tracing_core::metadata!(
+                name: "test_ns",
+                target: "test_target",
+                level: Level::INFO,
+                fields: &[],
+                callsite: &CS_NS,
+                kind: Kind::SPAN,
+            )
+        });
         let sub = LoggingSubscriber::new();
         let vs = FS_NS.value_set(&[]);
-        let attrs =
-            tracing_core::span::Attributes::new(&META_NS, &vs);
+        let attrs = tracing_core::span::Attributes::new(&META_NS, &vs);
         let id1 = sub.new_span(&attrs);
         let vs2 = FS_NS.value_set(&[]);
-        let attrs2 =
-            tracing_core::span::Attributes::new(&META_NS, &vs2);
+        let attrs2 = tracing_core::span::Attributes::new(&META_NS, &vs2);
         let id2 = sub.new_span(&attrs2);
         assert_ne!(id1.into_u64(), id2.into_u64());
     }
@@ -457,17 +414,16 @@ mod tests {
     #[test]
     #[cfg_attr(miri, ignore)]
     fn test_subscriber_event() {
-        static META_EV: std::sync::LazyLock<Metadata<'static>> =
-            std::sync::LazyLock::new(|| {
-                tracing_core::metadata!(
-                    name: "test_ev",
-                    target: "test_target",
-                    level: Level::WARN,
-                    fields: &["message"],
-                    callsite: &CS_EV,
-                    kind: Kind::EVENT,
-                )
-            });
+        static META_EV: std::sync::LazyLock<Metadata<'static>> = std::sync::LazyLock::new(|| {
+            tracing_core::metadata!(
+                name: "test_ev",
+                target: "test_target",
+                level: Level::WARN,
+                fields: &["message"],
+                callsite: &CS_EV,
+                kind: Kind::EVENT,
+            )
+        });
         let sub = LoggingSubscriber::new();
         let msg_field = FS_EV.field("message").unwrap();
         let msg: &dyn tracing_core::field::Value = &"hello world";
@@ -480,60 +436,28 @@ mod tests {
     // ---- LoggingVisitor tests ----
 
     static CS_V1: TestCallsite = TestCallsite;
-    static FS_V1: FieldSet = FieldSet::new(
-        &["message"],
-        tracing_core::identify_callsite!(&CS_V1),
-    );
+    static FS_V1: FieldSet = FieldSet::new(&["message"], tracing_core::identify_callsite!(&CS_V1));
     static CS_V2: TestCallsite = TestCallsite;
-    static FS_V2: FieldSet = FieldSet::new(
-        &["custom"],
-        tracing_core::identify_callsite!(&CS_V2),
-    );
+    static FS_V2: FieldSet = FieldSet::new(&["custom"], tracing_core::identify_callsite!(&CS_V2));
     static CS_V3: TestCallsite = TestCallsite;
-    static FS_V3: FieldSet = FieldSet::new(
-        &["message"],
-        tracing_core::identify_callsite!(&CS_V3),
-    );
+    static FS_V3: FieldSet = FieldSet::new(&["message"], tracing_core::identify_callsite!(&CS_V3));
     static CS_V4: TestCallsite = TestCallsite;
-    static FS_V4: FieldSet = FieldSet::new(
-        &["extra"],
-        tracing_core::identify_callsite!(&CS_V4),
-    );
+    static FS_V4: FieldSet = FieldSet::new(&["extra"], tracing_core::identify_callsite!(&CS_V4));
     static CS_V5: TestCallsite = TestCallsite;
-    static FS_V5: FieldSet = FieldSet::new(
-        &["error"],
-        tracing_core::identify_callsite!(&CS_V5),
-    );
+    static FS_V5: FieldSet = FieldSet::new(&["error"], tracing_core::identify_callsite!(&CS_V5));
     static CS_V6: TestCallsite = TestCallsite;
-    static FS_V6: FieldSet = FieldSet::new(
-        &["count"],
-        tracing_core::identify_callsite!(&CS_V6),
-    );
+    static FS_V6: FieldSet = FieldSet::new(&["count"], tracing_core::identify_callsite!(&CS_V6));
     static CS_V7: TestCallsite = TestCallsite;
-    static FS_V7: FieldSet = FieldSet::new(
-        &["delta"],
-        tracing_core::identify_callsite!(&CS_V7),
-    );
+    static FS_V7: FieldSet = FieldSet::new(&["delta"], tracing_core::identify_callsite!(&CS_V7));
     static CS_V8: TestCallsite = TestCallsite;
-    static FS_V8: FieldSet = FieldSet::new(
-        &["flag"],
-        tracing_core::identify_callsite!(&CS_V8),
-    );
+    static FS_V8: FieldSet = FieldSet::new(&["flag"], tracing_core::identify_callsite!(&CS_V8));
     static CS_V9: TestCallsite = TestCallsite;
-    static FS_V9: FieldSet = FieldSet::new(
-        &["ratio"],
-        tracing_core::identify_callsite!(&CS_V9),
-    );
+    static FS_V9: FieldSet = FieldSet::new(&["ratio"], tracing_core::identify_callsite!(&CS_V9));
     static CS_V10: TestCallsite = TestCallsite;
-    static FS_V10: FieldSet = FieldSet::new(
-        &["big"],
-        tracing_core::identify_callsite!(&CS_V10),
-    );
+    static FS_V10: FieldSet = FieldSet::new(&["big"], tracing_core::identify_callsite!(&CS_V10));
     static CS_V11: TestCallsite = TestCallsite;
-    static FS_V11: FieldSet = FieldSet::new(
-        &["signed_big"],
-        tracing_core::identify_callsite!(&CS_V11),
-    );
+    static FS_V11: FieldSet =
+        FieldSet::new(&["signed_big"], tracing_core::identify_callsite!(&CS_V11));
 
     #[test]
     fn test_visitor_record_debug_message_field() {
@@ -578,10 +502,7 @@ mod tests {
     fn test_visitor_record_error() {
         let mut visitor = LoggingVisitor::default();
         let field = FS_V5.field("error").unwrap();
-        let err = std::io::Error::new(
-            std::io::ErrorKind::NotFound,
-            "missing",
-        );
+        let err = std::io::Error::new(std::io::ErrorKind::NotFound, "missing");
         let err_ref: &(dyn std::error::Error + 'static) = &err;
         visitor.record_error(&field, err_ref);
         assert!(visitor.fields.contains_key("error"));
@@ -666,26 +587,22 @@ mod tests {
     #[test]
     #[cfg_attr(miri, ignore)]
     fn test_subscriber_event_with_extra_fields() {
-        static META_EV2: std::sync::LazyLock<Metadata<'static>> =
-            std::sync::LazyLock::new(|| {
-                tracing_core::metadata!(
-                    name: "test_ev2",
-                    target: "test_target",
-                    level: Level::WARN,
-                    fields: &["message", "extra_field"],
-                    callsite: &CS_EV2,
-                    kind: Kind::EVENT,
-                )
-            });
+        static META_EV2: std::sync::LazyLock<Metadata<'static>> = std::sync::LazyLock::new(|| {
+            tracing_core::metadata!(
+                name: "test_ev2",
+                target: "test_target",
+                level: Level::WARN,
+                fields: &["message", "extra_field"],
+                callsite: &CS_EV2,
+                kind: Kind::EVENT,
+            )
+        });
         let sub = LoggingSubscriber::new();
         let msg_field = FS_EV2.field("message").unwrap();
         let extra_field = FS_EV2.field("extra_field").unwrap();
         let msg: &dyn tracing_core::field::Value = &"event msg";
         let extra: &dyn tracing_core::field::Value = &"extra_val";
-        let vals = [
-            (&msg_field, Some(msg)),
-            (&extra_field, Some(extra)),
-        ];
+        let vals = [(&msg_field, Some(msg)), (&extra_field, Some(extra))];
         let fields = FS_EV2.value_set(&vals);
         let event = Event::new(&META_EV2, &fields);
         // Exercises the `for (key, value) in visitor.fields` loop in
@@ -761,10 +678,8 @@ mod tests {
 
         let layer = LoggingLayer::new();
         let subscriber = tracing_subscriber::registry().with(layer);
-        let dispatch =
-            tracing_core::dispatcher::Dispatch::new(subscriber);
-        let _guard =
-            tracing_core::dispatcher::set_default(&dispatch);
+        let dispatch = tracing_core::dispatcher::Dispatch::new(subscriber);
+        let _guard = tracing_core::dispatcher::set_default(&dispatch);
 
         // The subscriber dispatches enabled() to the layer
         assert!(dispatch.enabled(&META_LL_EN));
@@ -773,10 +688,8 @@ mod tests {
     #[cfg(feature = "logging-tracing-layer")]
     static CS_LL_EV: TestCallsite = TestCallsite;
     #[cfg(feature = "logging-tracing-layer")]
-    static FS_LL_EV: FieldSet = FieldSet::new(
-        &["message"],
-        tracing_core::identify_callsite!(&CS_LL_EV),
-    );
+    static FS_LL_EV: FieldSet =
+        FieldSet::new(&["message"], tracing_core::identify_callsite!(&CS_LL_EV));
 
     #[cfg(feature = "logging-tracing-layer")]
     #[test]
@@ -796,17 +709,13 @@ mod tests {
                 )
             });
 
-        let layer = LoggingLayer::new()
-            .with_format(crate::logging::log_format::LogFormat::JSON);
+        let layer = LoggingLayer::new().with_format(crate::logging::log_format::LogFormat::JSON);
         let subscriber = tracing_subscriber::registry().with(layer);
-        let dispatch =
-            tracing_core::dispatcher::Dispatch::new(subscriber);
-        let _guard =
-            tracing_core::dispatcher::set_default(&dispatch);
+        let dispatch = tracing_core::dispatcher::Dispatch::new(subscriber);
+        let _guard = tracing_core::dispatcher::set_default(&dispatch);
 
         let msg_field = FS_LL_EV.field("message").unwrap();
-        let msg: &dyn tracing_core::field::Value =
-            &"layer event test";
+        let msg: &dyn tracing_core::field::Value = &"layer event test";
         let vals = [(&msg_field, Some(msg))];
         let fields = FS_LL_EV.value_set(&vals);
         let event = Event::new(&META_LL_EV, &fields);
@@ -818,10 +727,7 @@ mod tests {
     #[cfg(feature = "logging-tracing-layer")]
     static CS_LL_SP: TestCallsite = TestCallsite;
     #[cfg(feature = "logging-tracing-layer")]
-    static FS_LL_SP: FieldSet = FieldSet::new(
-        &[],
-        tracing_core::identify_callsite!(&CS_LL_SP),
-    );
+    static FS_LL_SP: FieldSet = FieldSet::new(&[], tracing_core::identify_callsite!(&CS_LL_SP));
 
     #[cfg(feature = "logging-tracing-layer")]
     #[test]
@@ -843,27 +749,18 @@ mod tests {
 
         let layer = LoggingLayer::new();
         let subscriber = tracing_subscriber::registry().with(layer);
-        let dispatch =
-            tracing_core::dispatcher::Dispatch::new(subscriber);
-        let _guard =
-            tracing_core::dispatcher::set_default(&dispatch);
+        let dispatch = tracing_core::dispatcher::Dispatch::new(subscriber);
+        let _guard = tracing_core::dispatcher::set_default(&dispatch);
 
-        let initial_spans =
-            super::super::engine::ENGINE.active_spans();
+        let initial_spans = super::super::engine::ENGINE.active_spans();
 
         // Create a new span
         let vs = FS_LL_SP.value_set(&[]);
-        let attrs = tracing_core::span::Attributes::new(
-            &META_LL_SP,
-            &vs,
-        );
+        let attrs = tracing_core::span::Attributes::new(&META_LL_SP, &vs);
         let id = dispatch.new_span(&attrs);
 
         // on_new_span should have incremented spans
-        assert!(
-            super::super::engine::ENGINE.active_spans()
-                > initial_spans
-        );
+        assert!(super::super::engine::ENGINE.active_spans() > initial_spans);
 
         // Enter and exit the span (no-ops for our layer, but exercise paths)
         dispatch.enter(&id);
@@ -877,10 +774,7 @@ mod tests {
     #[cfg(feature = "logging-tracing-layer")]
     static CS_LL_CL: TestCallsite = TestCallsite;
     #[cfg(feature = "logging-tracing-layer")]
-    static FS_LL_CL: FieldSet = FieldSet::new(
-        &[],
-        tracing_core::identify_callsite!(&CS_LL_CL),
-    );
+    static FS_LL_CL: FieldSet = FieldSet::new(&[], tracing_core::identify_callsite!(&CS_LL_CL));
 
     #[cfg(feature = "logging-tracing-layer")]
     #[test]
@@ -902,26 +796,17 @@ mod tests {
 
         let layer = LoggingLayer::new();
         let subscriber = tracing_subscriber::registry().with(layer);
-        let dispatch =
-            tracing_core::dispatcher::Dispatch::new(subscriber);
-        let _guard =
-            tracing_core::dispatcher::set_default(&dispatch);
+        let dispatch = tracing_core::dispatcher::Dispatch::new(subscriber);
+        let _guard = tracing_core::dispatcher::set_default(&dispatch);
 
-        let initial_spans =
-            super::super::engine::ENGINE.active_spans();
+        let initial_spans = super::super::engine::ENGINE.active_spans();
 
         // Create a span (increments active spans via on_new_span)
         let vs = FS_LL_CL.value_set(&[]);
-        let attrs = tracing_core::span::Attributes::new(
-            &META_LL_CL,
-            &vs,
-        );
+        let attrs = tracing_core::span::Attributes::new(&META_LL_CL, &vs);
         let id = dispatch.new_span(&attrs);
 
-        assert!(
-            super::super::engine::ENGINE.active_spans()
-                > initial_spans
-        );
+        assert!(super::super::engine::ENGINE.active_spans() > initial_spans);
 
         // Dropping the span ID triggers on_close which calls dec_spans
         // Note: tracing_core::span::Id does not implement Drop, so this
@@ -929,10 +814,7 @@ mod tests {
         let _ = id;
 
         // active_spans should be back to at least the initial count
-        assert!(
-            super::super::engine::ENGINE.active_spans()
-                <= initial_spans + 1
-        );
+        assert!(super::super::engine::ENGINE.active_spans() <= initial_spans + 1);
     }
 
     #[cfg(feature = "logging-tracing-layer")]
@@ -961,24 +843,16 @@ mod tests {
                 )
             });
 
-        let layer = LoggingLayer::new()
-            .with_format(crate::logging::log_format::LogFormat::MCP);
+        let layer = LoggingLayer::new().with_format(crate::logging::log_format::LogFormat::MCP);
         let subscriber = tracing_subscriber::registry().with(layer);
-        let dispatch =
-            tracing_core::dispatcher::Dispatch::new(subscriber);
-        let _guard =
-            tracing_core::dispatcher::set_default(&dispatch);
+        let dispatch = tracing_core::dispatcher::Dispatch::new(subscriber);
+        let _guard = tracing_core::dispatcher::set_default(&dispatch);
 
         let msg_field = FS_LL_EV2.field("message").unwrap();
         let extra_field = FS_LL_EV2.field("extra_key").unwrap();
-        let msg: &dyn tracing_core::field::Value =
-            &"event with fields";
-        let extra: &dyn tracing_core::field::Value =
-            &"extra_value";
-        let vals = [
-            (&msg_field, Some(msg)),
-            (&extra_field, Some(extra)),
-        ];
+        let msg: &dyn tracing_core::field::Value = &"event with fields";
+        let extra: &dyn tracing_core::field::Value = &"extra_value";
+        let vals = [(&msg_field, Some(msg)), (&extra_field, Some(extra))];
         let fields = FS_LL_EV2.value_set(&vals);
         let event = Event::new(&META_LL_EV2, &fields);
 

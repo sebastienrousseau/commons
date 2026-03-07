@@ -34,17 +34,7 @@ impl Error for ParseLogLevelError {}
 
 /// An enumeration of the different levels that a log message can have, ordered by severity.
 #[derive(
-    Clone,
-    Copy,
-    Debug,
-    Default,
-    Deserialize,
-    Eq,
-    Hash,
-    Ord,
-    PartialEq,
-    PartialOrd,
-    Serialize,
+    Clone, Copy, Debug, Default, Deserialize, Eq, Hash, Ord, PartialEq, PartialOrd, Serialize,
 )]
 pub enum LogLevel {
     /// `ALL`: The log level includes all levels.
