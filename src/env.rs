@@ -21,6 +21,11 @@ use std::env;
 use std::str::FromStr;
 
 /// Error type for environment variable operations.
+///
+/// The `expected` field in [`ParseError`](EnvError::ParseError) is populated
+/// via [`std::any::type_name`], which is not guaranteed to be stable across
+/// compiler versions. It is intended for human-readable diagnostics only —
+/// do not match on its string value programmatically.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[allow(missing_docs)]
 pub enum EnvError {
@@ -30,6 +35,8 @@ pub enum EnvError {
     ParseError {
         var: String,
         value: String,
+        /// Human-readable type name (from `std::any::type_name`).
+        /// Not stable across compiler versions — for display only.
         expected: String,
     },
     /// Variable value is empty.
@@ -94,6 +101,10 @@ where
 
 /// Get an environment variable, returning an error if not set or invalid.
 ///
+/// # Errors
+///
+/// Returns an error if the variable is not set, empty, or cannot be parsed.
+///
 /// # Example
 ///
 /// ```rust
@@ -155,9 +166,12 @@ pub fn get_string(key: &str) -> Option<String> {
 /// Everything else is false.
 #[must_use]
 pub fn get_bool(key: &str) -> bool {
-    env::var(key)
-        .map(|v| matches!(v.to_lowercase().as_str(), "true" | "1" | "yes" | "on"))
-        .unwrap_or(false)
+    env::var(key).is_ok_and(|v| {
+        v == "1"
+            || v.eq_ignore_ascii_case("true")
+            || v.eq_ignore_ascii_case("yes")
+            || v.eq_ignore_ascii_case("on")
+    })
 }
 
 /// Get an environment variable as a list, split by a delimiter.
@@ -237,12 +251,14 @@ impl EnvConfig {
     }
 
     /// Add a required variable.
+    #[must_use]
     pub fn require(&mut self, key: &str) -> &mut Self {
         self.vars.push((key.to_string(), None));
         self
     }
 
     /// Add an optional variable with a default.
+    #[must_use]
     pub fn optional(&mut self, key: &str, default: &str) -> &mut Self {
         self.vars.push((key.to_string(), Some(default.to_string())));
         self
@@ -303,7 +319,7 @@ mod tests {
     #[test]
     fn test_env_config_validation() {
         let mut config = EnvConfig::new();
-        config
+        let _ = config
             .require("DEFINITELY_NOT_SET_VAR")
             .optional("OPTIONAL_VAR", "default");
 

@@ -3,7 +3,13 @@
 use std::collections::HashMap;
 use std::hash::Hash;
 
-/// A cache with a maximum capacity that evicts the least recently used items
+/// A cache with a maximum capacity that evicts the least recently used items.
+///
+/// This implementation uses a `Vec` for order tracking, giving O(N) access
+/// and insertion cost per operation. It is designed for small-capacity caches
+/// (up to ~100 entries). For high-throughput or large-capacity use cases,
+/// consider the [`lru`](https://crates.io/crates/lru) crate which provides
+/// O(1) operations via a doubly-linked list and `HashMap`.
 #[derive(Debug)]
 pub struct LruCache<K, V> {
     capacity: usize,
@@ -13,6 +19,7 @@ pub struct LruCache<K, V> {
 
 impl<K: Clone + Hash + Eq, V> LruCache<K, V> {
     /// Create a new LRU cache with the given capacity
+    #[must_use]
     pub fn new(capacity: usize) -> Self {
         Self {
             capacity,
@@ -46,6 +53,7 @@ impl<K: Clone + Hash + Eq, V> LruCache<K, V> {
     }
 
     /// Get a value without updating its position
+    #[must_use]
     pub fn peek(&self, key: &K) -> Option<&V> {
         self.data.get(key)
     }
@@ -61,11 +69,13 @@ impl<K: Clone + Hash + Eq, V> LruCache<K, V> {
     }
 
     /// Get the current size of the cache
+    #[must_use]
     pub fn len(&self) -> usize {
         self.data.len()
     }
 
     /// Check if the cache is empty
+    #[must_use]
     pub fn is_empty(&self) -> bool {
         self.data.is_empty()
     }

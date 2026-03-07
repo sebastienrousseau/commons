@@ -110,7 +110,11 @@ impl CommonError {
 
 /// Extension trait for Result types.
 pub trait ResultExt<T> {
-    /// Convert any error to a CommonError with context.
+    /// Convert any error to a `CommonError` with context.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the underlying result is an error.
     fn with_context(self, context: &str) -> CommonResult<T>;
 }
 

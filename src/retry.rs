@@ -56,6 +56,12 @@ pub enum BackoffStrategy {
 impl BackoffStrategy {
     /// Calculate delay for a given attempt number (0-indexed).
     #[must_use]
+    #[allow(
+        clippy::cast_possible_truncation,
+        clippy::cast_sign_loss,
+        clippy::cast_precision_loss,
+        clippy::cast_possible_wrap
+    )]
     pub fn delay_for_attempt(&self, attempt: usize) -> Duration {
         match self {
             Self::None => Duration::ZERO,
@@ -115,28 +121,32 @@ impl RetryConfig {
 
     /// Set maximum number of attempts.
     #[must_use]
-    pub fn max_attempts(mut self, n: usize) -> Self {
-        self.max_attempts = n.max(1);
+    pub const fn max_attempts(mut self, n: usize) -> Self {
+        if n < 1 {
+            self.max_attempts = 1;
+        } else {
+            self.max_attempts = n;
+        }
         self
     }
 
     /// Set backoff strategy.
     #[must_use]
-    pub fn backoff(mut self, strategy: BackoffStrategy) -> Self {
+    pub const fn backoff(mut self, strategy: BackoffStrategy) -> Self {
         self.backoff = strategy;
         self
     }
 
     /// Enable or disable jitter.
     #[must_use]
-    pub fn jitter(mut self, enabled: bool) -> Self {
+    pub const fn jitter(mut self, enabled: bool) -> Self {
         self.jitter = enabled;
         self
     }
 
     /// Create config for no retries.
     #[must_use]
-    pub fn no_retry() -> Self {
+    pub const fn no_retry() -> Self {
         Self {
             max_attempts: 1,
             backoff: BackoffStrategy::None,
@@ -146,7 +156,7 @@ impl RetryConfig {
 
     /// Create config with simple constant delay.
     #[must_use]
-    pub fn with_constant_delay(attempts: usize, delay: Duration) -> Self {
+    pub const fn with_constant_delay(attempts: usize, delay: Duration) -> Self {
         Self {
             max_attempts: attempts,
             backoff: BackoffStrategy::Constant(delay),
@@ -156,7 +166,11 @@ impl RetryConfig {
 
     /// Create config with exponential backoff.
     #[must_use]
-    pub fn with_exponential_backoff(attempts: usize, initial: Duration, max: Duration) -> Self {
+    pub const fn with_exponential_backoff(
+        attempts: usize,
+        initial: Duration,
+        max: Duration,
+    ) -> Self {
         Self {
             max_attempts: attempts,
             backoff: BackoffStrategy::Exponential {
@@ -193,17 +207,21 @@ pub struct RetryResult<T, E> {
 impl<T, E> RetryResult<T, E> {
     /// Check if the operation succeeded.
     #[must_use]
-    pub fn is_ok(&self) -> bool {
+    pub const fn is_ok(&self) -> bool {
         self.result.is_ok()
     }
 
     /// Check if the operation failed.
     #[must_use]
-    pub fn is_err(&self) -> bool {
+    pub const fn is_err(&self) -> bool {
         self.result.is_err()
     }
 
     /// Unwrap the result, panicking on error.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the result is an error.
     pub fn unwrap(self) -> T
     where
         E: std::fmt::Debug,
@@ -212,6 +230,10 @@ impl<T, E> RetryResult<T, E> {
     }
 
     /// Get the result, converting error.
+    ///
+    /// # Errors
+    ///
+    /// Returns the last error if all retry attempts failed.
     pub fn into_result(self) -> Result<T, E> {
         self.result
     }
@@ -227,14 +249,26 @@ impl<T, E> RetryResult<T, E> {
 /// # Returns
 ///
 /// The result of the operation, or the last error if all retries failed.
+///
+/// # Panics
+///
+/// Panics if `max_attempts` is somehow zero after internal clamping
+/// (should be unreachable).
+#[allow(
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss,
+    clippy::cast_precision_loss
+)]
 pub fn retry<T, E, F>(config: RetryConfig, mut operation: F) -> RetryResult<T, E>
 where
     F: FnMut() -> Result<T, E>,
 {
     let start = std::time::Instant::now();
     let mut last_error: Option<E> = None;
+    // Defensively clamp: public fields can bypass the builder's min-1 guard.
+    let max_attempts = config.max_attempts.max(1);
 
-    for attempt in 0..config.max_attempts {
+    for attempt in 0..max_attempts {
         match operation() {
             Ok(value) => {
                 return RetryResult {
@@ -247,7 +281,7 @@ where
                 last_error = Some(e);
 
                 // Don't sleep after the last attempt
-                if attempt + 1 < config.max_attempts {
+                if attempt + 1 < max_attempts {
                     let mut delay = config.backoff.delay_for_attempt(attempt);
 
                     // Add jitter (0-25% of delay)
@@ -268,20 +302,26 @@ where
 
     RetryResult {
         result: Err(last_error.expect("At least one attempt should have been made")),
-        attempts: config.max_attempts,
+        attempts: max_attempts,
         total_time: start.elapsed(),
     }
 }
 
 /// Execute an operation with retries, with access to attempt number.
+///
+/// # Panics
+///
+/// Panics if `max_attempts` is somehow zero after internal clamping
+/// (should be unreachable).
 pub fn retry_with_context<T, E, F>(config: RetryConfig, mut operation: F) -> RetryResult<T, E>
 where
     F: FnMut(usize) -> Result<T, E>,
 {
     let start = std::time::Instant::now();
     let mut last_error: Option<E> = None;
+    let max_attempts = config.max_attempts.max(1);
 
-    for attempt in 0..config.max_attempts {
+    for attempt in 0..max_attempts {
         match operation(attempt) {
             Ok(value) => {
                 return RetryResult {
@@ -293,7 +333,7 @@ where
             Err(e) => {
                 last_error = Some(e);
 
-                if attempt + 1 < config.max_attempts {
+                if attempt + 1 < max_attempts {
                     let delay = config.backoff.delay_for_attempt(attempt);
                     if delay > Duration::ZERO {
                         thread::sleep(delay);
@@ -305,7 +345,7 @@ where
 
     RetryResult {
         result: Err(last_error.expect("At least one attempt should have been made")),
-        attempts: config.max_attempts,
+        attempts: max_attempts,
         total_time: start.elapsed(),
     }
 }
@@ -317,7 +357,7 @@ fn simple_random() -> f64 {
         .duration_since(SystemTime::UNIX_EPOCH)
         .unwrap_or_default()
         .subsec_nanos();
-    (nanos % 1000) as f64 / 1000.0
+    f64::from(nanos % 1000) / 1000.0
 }
 
 #[cfg(test)]
@@ -401,5 +441,31 @@ mod tests {
     fn test_no_retry_config() {
         let config = RetryConfig::no_retry();
         assert_eq!(config.max_attempts, 1);
+    }
+
+    #[test]
+    fn test_zero_max_attempts_does_not_panic() {
+        // Bypass the builder by constructing directly with max_attempts = 0.
+        let config = RetryConfig {
+            max_attempts: 0,
+            backoff: BackoffStrategy::None,
+            jitter: false,
+        };
+        let result = retry(config, || Err::<(), _>("fail"));
+        // Should clamp to 1 attempt instead of panicking.
+        assert!(result.is_err());
+        assert_eq!(result.attempts, 1);
+    }
+
+    #[test]
+    fn test_zero_max_attempts_with_context() {
+        let config = RetryConfig {
+            max_attempts: 0,
+            backoff: BackoffStrategy::None,
+            jitter: false,
+        };
+        let result = retry_with_context(config, |_| Err::<(), _>("fail"));
+        assert!(result.is_err());
+        assert_eq!(result.attempts, 1);
     }
 }

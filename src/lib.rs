@@ -16,6 +16,7 @@
 //! - `retry` - Retry logic with backoff strategies
 //! - `id` - ID generation (timestamp, random, UUID-like)
 //! - `env` - Environment variable helpers
+//! - `fs` - Cross-platform filesystem utilities
 //!
 //! ## Quick Start
 //!
@@ -77,6 +78,10 @@ pub mod id;
 #[cfg_attr(docsrs, doc(cfg(feature = "env")))]
 pub mod env;
 
+#[cfg(feature = "fs")]
+#[cfg_attr(docsrs, doc(cfg(feature = "fs")))]
+pub mod fs;
+
 /// Prelude module for convenient imports.
 ///
 /// Import everything commonly needed:
@@ -113,6 +118,9 @@ pub mod prelude {
 
     #[cfg(feature = "env")]
     pub use crate::env::{get_env, get_env_or, is_development, is_production, require_env};
+
+    #[cfg(feature = "fs")]
+    pub use crate::fs::{ensure_dir, from_wsl_path, is_wsl, resolve_path, to_wsl_path};
 }
 
 /// Crate version.
@@ -120,7 +128,7 @@ pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 /// Returns the crate version.
 #[must_use]
-pub fn version() -> &'static str {
+pub const fn version() -> &'static str {
     VERSION
 }
 

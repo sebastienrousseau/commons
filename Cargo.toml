@@ -33,16 +33,17 @@ path = "src/lib.rs"
 
 [features]
 default = ["full"]
-full = ["config", "error", "logging", "time", "collections", "validation", "retry", "id", "env"]
+full = ["config", "error", "logging", "time", "collections", "validation", "retry", "id", "env", "fs"]
 config = ["serde", "toml"]
 error = ["thiserror"]
-logging = []
+logging = ["time"]
 time = []
 collections = []
 validation = []
 retry = []
 id = []
 env = []
+fs = []
 
 [dependencies]
 thiserror = { version = "2.0", optional = true }
@@ -59,7 +60,7 @@ rustdoc-args = [
     "--generate-link-to-definition",
     "--cfg", "docsrs",
 ]
-targets = ["x86_64-unknown-linux-gnu"]
+targets = ["x86_64-unknown-linux-gnu", "x86_64-apple-darwin", "x86_64-pc-windows-msvc"]
 
 # Linting config
 [lints.rust]
@@ -107,13 +108,11 @@ unused_macro_rules = "deny"
 unused_qualifications = "deny"
 variant_size_differences = "deny"
 
-[package.metadata.clippy]
-warn-lints = [
-    "clippy::all",
-    "clippy::pedantic",
-    "clippy::cargo",
-    "clippy::nursery",
-]
+[lints.clippy]
+all = "warn"
+pedantic = "warn"
+cargo = "warn"
+nursery = "warn"
 
 [profile.dev]
 codegen-units = 256
@@ -135,7 +134,7 @@ incremental = false
 lto = true
 opt-level = 3
 overflow-checks = true
-panic = "abort"
+panic = "unwind"
 rpath = false
 strip = "symbols"
 

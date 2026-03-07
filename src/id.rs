@@ -12,11 +12,15 @@
 //! println!("Generated ID: {}", id);
 //! ```
 
+use std::fmt::Write;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{SystemTime, UNIX_EPOCH};
 
-/// Counter for ensuring uniqueness within the same millisecond.
-static COUNTER: AtomicU64 = AtomicU64::new(0);
+/// Counter for timestamp-based ID uniqueness within the same millisecond.
+static TIMESTAMP_COUNTER: AtomicU64 = AtomicU64::new(0);
+
+/// Counter for entropy seeding in random byte generation.
+static ENTROPY_COUNTER: AtomicU64 = AtomicU64::new(0);
 
 /// ID format options.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -43,10 +47,9 @@ pub enum IdFormat {
 #[must_use]
 pub fn generate_id(format: IdFormat) -> String {
     match format {
-        IdFormat::Timestamp => generate_timestamp_id(),
         IdFormat::RandomHex => generate_random_hex(),
         IdFormat::Short => generate_short_id(),
-        IdFormat::Prefixed => generate_timestamp_id(), // Use with generate_prefixed_id
+        IdFormat::Timestamp | IdFormat::Prefixed => generate_timestamp_id(),
     }
 }
 
@@ -58,10 +61,10 @@ pub fn generate_id(format: IdFormat) -> String {
 ///
 /// # Returns
 ///
-/// A prefixed unique ID like "usr_abc123".
+/// A prefixed unique ID like `usr_abc123`.
 #[must_use]
 pub fn generate_prefixed_id(prefix: &str) -> String {
-    format!("{}_{}", prefix, generate_short_id())
+    format!("{prefix}_{}", generate_short_id())
 }
 
 /// Generate a timestamp-based sortable ID.
@@ -71,8 +74,8 @@ pub fn generate_prefixed_id(prefix: &str) -> String {
 #[must_use]
 pub fn generate_timestamp_id() -> String {
     let timestamp = current_timestamp_millis();
-    let counter = COUNTER.fetch_add(1, Ordering::SeqCst) % 10_000_000;
-    format!("{:013}{:07}", timestamp, counter)
+    let counter = TIMESTAMP_COUNTER.fetch_add(1, Ordering::SeqCst) % 10_000_000;
+    format!("{timestamp:013}{counter:07}")
 }
 
 /// Generate a random hexadecimal ID (32 characters).
@@ -80,7 +83,10 @@ pub fn generate_timestamp_id() -> String {
 pub fn generate_random_hex() -> String {
     let mut bytes = [0u8; 16];
     fill_random_bytes(&mut bytes);
-    bytes.iter().map(|b| format!("{:02x}", b)).collect()
+    bytes.iter().fold(String::with_capacity(32), |mut s, b| {
+        let _ = write!(s, "{b:02x}");
+        s
+    })
 }
 
 /// Generate a short random ID (12 characters, base62).
@@ -132,6 +138,7 @@ pub fn generate_uuid_like() -> String {
 
 /// Get current timestamp in milliseconds.
 #[must_use]
+#[allow(clippy::cast_possible_truncation)]
 pub fn current_timestamp_millis() -> u64 {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -144,7 +151,7 @@ fn fill_random_bytes(bytes: &mut [u8]) {
     use std::collections::hash_map::DefaultHasher;
     use std::hash::{Hash, Hasher};
 
-    let counter = COUNTER.fetch_add(1, Ordering::SeqCst);
+    let counter = ENTROPY_COUNTER.fetch_add(1, Ordering::SeqCst);
     let timestamp = current_timestamp_millis();
 
     // Use multiple sources of entropy
@@ -190,7 +197,7 @@ impl IdGenerator {
 
     /// Set the ID format.
     #[must_use]
-    pub fn with_format(mut self, format: IdFormat) -> Self {
+    pub const fn with_format(mut self, format: IdFormat) -> Self {
         self.format = format;
         self
     }
@@ -200,7 +207,7 @@ impl IdGenerator {
     pub fn generate(&self) -> String {
         let id = generate_id(self.format);
         match &self.prefix {
-            Some(p) => format!("{}_{}", p, id),
+            Some(p) => format!("{p}_{id}"),
             None => id,
         }
     }
@@ -284,5 +291,15 @@ mod tests {
     fn test_uniqueness() {
         let ids: HashSet<String> = (0..1000).map(|_| generate_short_id()).collect();
         assert_eq!(ids.len(), 1000);
+    }
+
+    #[test]
+    fn test_counter_isolation() {
+        // Heavy random ID generation should not exhaust the timestamp counter domain.
+        let _random_ids: Vec<String> = (0..1000).map(|_| generate_random_hex()).collect();
+
+        // Timestamp IDs should still be unique after heavy random generation.
+        let ts_ids: HashSet<String> = (0..100).map(|_| generate_timestamp_id()).collect();
+        assert_eq!(ts_ids.len(), 100);
     }
 }

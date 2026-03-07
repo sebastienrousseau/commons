@@ -56,7 +56,7 @@ impl std::fmt::Display for ValidationError {
                 write!(f, "Value doesn't match pattern: {pattern}")
             }
             Self::NotInSet { allowed } => {
-                write!(f, "Value not in allowed set: {:?}", allowed)
+                write!(f, "Value not in allowed set: {allowed:?}")
             }
             Self::Custom(msg) => write!(f, "{msg}"),
         }
@@ -69,6 +69,10 @@ impl std::error::Error for ValidationError {}
 pub type ValidationResult<T> = Result<T, ValidationError>;
 
 /// Validate that a string is not empty.
+///
+/// # Errors
+///
+/// Returns `ValidationError::Empty` if the trimmed value is empty.
 pub fn validate_not_empty(value: &str) -> ValidationResult<&str> {
     if value.trim().is_empty() {
         Err(ValidationError::Empty)
@@ -78,7 +82,11 @@ pub fn validate_not_empty(value: &str) -> ValidationResult<&str> {
 }
 
 /// Validate string length is within bounds.
-pub fn validate_length(value: &str, min: usize, max: usize) -> ValidationResult<&str> {
+///
+/// # Errors
+///
+/// Returns `ValidationError::TooShort` or `ValidationError::TooLong` if out of range.
+pub const fn validate_length(value: &str, min: usize, max: usize) -> ValidationResult<&str> {
     let len = value.len();
     if len < min {
         Err(ValidationError::TooShort { min, actual: len })
@@ -90,6 +98,10 @@ pub fn validate_length(value: &str, min: usize, max: usize) -> ValidationResult<
 }
 
 /// Validate that a number is within range.
+///
+/// # Errors
+///
+/// Returns `ValidationError::BelowMin` or `ValidationError::AboveMax` if out of range.
 pub fn validate_range<T>(value: T, min: T, max: T) -> ValidationResult<T>
 where
     T: PartialOrd + std::fmt::Display + Copy,
@@ -148,23 +160,56 @@ pub fn is_valid_email(email: &str) -> bool {
 }
 
 /// Check if a string looks like a valid URL.
+///
+/// Rejects whitespace, bare dots (e.g. `http://.`), and URLs without
+/// a meaningful host. For full RFC 3986 compliance, use the
+/// [`url`](https://crates.io/crates/url) crate.
 #[must_use]
 pub fn is_valid_url(url: &str) -> bool {
     let url = url.trim();
 
     // Must start with http:// or https://
-    if !url.starts_with("http://") && !url.starts_with("https://") {
-        return false;
-    }
-
-    // Must have something after the protocol
     let rest = url
         .strip_prefix("https://")
         .or_else(|| url.strip_prefix("http://"));
-    match rest {
-        Some(r) => !r.is_empty() && r.contains('.'),
-        None => false,
+
+    let Some(rest) = rest else {
+        return false;
+    };
+
+    // Must have content after the scheme
+    if rest.is_empty() {
+        return false;
     }
+
+    // No whitespace allowed
+    if rest.contains(char::is_whitespace) {
+        return false;
+    }
+
+    // Extract the host (before any path, query, or fragment)
+    let host = rest.split('/').next().unwrap_or(rest);
+    let host = host.split('?').next().unwrap_or(host);
+    let host = host.split('#').next().unwrap_or(host);
+
+    // Strip port from host (handle IPv6 bracketed addresses)
+    let host_without_port = if host.starts_with('[') {
+        host.split(']')
+            .next()
+            .map_or(host, |h| h.trim_start_matches('['))
+    } else {
+        host.rsplit_once(':').map_or(host, |(h, _)| h)
+    };
+
+    // Allow "localhost" as a valid host
+    if host_without_port.eq_ignore_ascii_case("localhost") {
+        return true;
+    }
+
+    // Host must contain a dot and have content on both sides
+    host_without_port
+        .find('.')
+        .is_some_and(|dot_pos| dot_pos > 0 && dot_pos < host_without_port.len() - 1)
 }
 
 /// Check if a string is a valid IP address (v4 or v6).
@@ -188,7 +233,7 @@ pub fn is_valid_ipv6(ip: &str) -> bool {
 /// Check if a string contains only alphanumeric characters.
 #[must_use]
 pub fn is_alphanumeric(s: &str) -> bool {
-    !s.is_empty() && s.chars().all(|c| c.is_alphanumeric())
+    !s.is_empty() && s.chars().all(char::is_alphanumeric)
 }
 
 /// Check if a string contains only ASCII alphanumeric characters and underscores.
@@ -211,22 +256,31 @@ pub fn is_identifier(s: &str) -> bool {
 }
 
 /// Check if a string is a valid semantic version.
+///
+/// Supports optional `v` prefix, pre-release labels (`-alpha.1`), and
+/// build metadata (`+build.42`). The three core version components
+/// (major, minor, patch) must be non-negative integers.
 #[must_use]
 pub fn is_valid_semver(version: &str) -> bool {
     let version = version.trim().strip_prefix('v').unwrap_or(version);
-    let parts: Vec<&str> = version.split('.').collect();
+
+    // Split off pre-release and build metadata before parsing the core
+    let core_version = version.split(&['-', '+'][..]).next().unwrap_or(version);
+
+    let parts: Vec<&str> = core_version.split('.').collect();
 
     if parts.len() != 3 {
         return false;
     }
 
-    parts.iter().all(|part| {
-        let clean = part.split('-').next().unwrap_or(part);
-        clean.parse::<u64>().is_ok()
-    })
+    parts.iter().all(|part| part.parse::<u64>().is_ok())
 }
 
 /// Validate that a value is in an allowed set.
+///
+/// # Errors
+///
+/// Returns `ValidationError::NotInSet` if the value is not in the allowed set.
 pub fn validate_in_set<T>(value: &T, allowed: &[T]) -> ValidationResult<()>
 where
     T: PartialEq + std::fmt::Display,
@@ -235,7 +289,7 @@ where
         Ok(())
     } else {
         Err(ValidationError::NotInSet {
-            allowed: allowed.iter().map(|v| v.to_string()).collect(),
+            allowed: allowed.iter().map(ToString::to_string).collect(),
         })
     }
 }
@@ -266,7 +320,7 @@ impl Validator {
 
     /// Check if validation passed.
     #[must_use]
-    pub fn is_valid(&self) -> bool {
+    pub const fn is_valid(&self) -> bool {
         self.errors.is_empty()
     }
 
@@ -277,6 +331,10 @@ impl Validator {
     }
 
     /// Finish validation and return result.
+    ///
+    /// # Errors
+    ///
+    /// Returns the list of validation errors if any checks failed.
     pub fn finish(self) -> Result<(), Vec<(String, ValidationError)>> {
         if self.errors.is_empty() {
             Ok(())
@@ -325,9 +383,27 @@ mod tests {
     fn test_is_valid_url() {
         assert!(is_valid_url("https://example.com"));
         assert!(is_valid_url("http://example.com/path"));
+        assert!(is_valid_url("https://example.com/path?q=1#frag"));
         assert!(!is_valid_url("example.com"));
         assert!(!is_valid_url("ftp://example.com"));
         assert!(!is_valid_url("https://"));
+        assert!(!is_valid_url("http://."));
+        assert!(!is_valid_url("https://invalid space.com"));
+        assert!(!is_valid_url("http://.com"));
+        assert!(!is_valid_url("http://com."));
+
+        // Localhost support
+        assert!(is_valid_url("http://localhost"));
+        assert!(is_valid_url("http://localhost:8080"));
+        assert!(is_valid_url("http://localhost/path"));
+        assert!(is_valid_url("http://localhost:8080/path?q=1"));
+        assert!(is_valid_url("https://LOCALHOST"));
+
+        // Port stripping on regular domains
+        assert!(is_valid_url("http://example.com:8080"));
+
+        // Empty host with port should fail
+        assert!(!is_valid_url("http://:8080"));
     }
 
     #[test]
@@ -357,6 +433,10 @@ mod tests {
         assert!(is_valid_semver("v1.0.0"));
         assert!(is_valid_semver("0.1.0"));
         assert!(is_valid_semver("1.0.0-alpha"));
+        assert!(is_valid_semver("1.0.0-alpha.1"));
+        assert!(is_valid_semver("1.0.0-rc.2"));
+        assert!(is_valid_semver("1.0.0+build.42"));
+        assert!(is_valid_semver("1.0.0-beta+exp.sha.5114f85"));
         assert!(!is_valid_semver("1.0"));
         assert!(!is_valid_semver("1"));
         assert!(!is_valid_semver("a.b.c"));

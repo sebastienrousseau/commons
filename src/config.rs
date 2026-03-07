@@ -23,10 +23,16 @@ use serde::de::DeserializeOwned;
 use std::path::Path;
 
 /// Configuration loading and management.
+///
+/// The TOML content is parsed once on creation and cached internally,
+/// so repeated calls to [`get`](Config::get) and [`has_key`](Config::has_key)
+/// are cheap lookups rather than full re-parses.
 #[derive(Debug, Clone)]
 pub struct Config {
     /// Raw TOML content.
     content: String,
+    /// Pre-parsed TOML value tree for efficient lookups.
+    parsed: toml::Value,
 }
 
 impl Config {
@@ -48,8 +54,11 @@ impl Config {
     /// ```
     #[must_use]
     pub fn new(content: &str) -> Self {
+        let parsed =
+            toml::from_str(content).unwrap_or_else(|_| toml::Value::Table(toml::map::Map::new()));
         Self {
             content: content.to_string(),
+            parsed,
         }
     }
 
@@ -73,7 +82,9 @@ impl Config {
     pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self, ConfigError> {
         let content = std::fs::read_to_string(path.as_ref())
             .map_err(|e| ConfigError::FileRead(format!("{}: {}", path.as_ref().display(), e)))?;
-        Ok(Self { content })
+        let parsed =
+            toml::from_str(&content).unwrap_or_else(|_| toml::Value::Table(toml::map::Map::new()));
+        Ok(Self { content, parsed })
     }
 
     /// Parse the configuration into a typed struct.
@@ -119,8 +130,7 @@ impl Config {
     /// ```
     #[must_use]
     pub fn get<T: FromTomlValue>(&self, key: &str) -> Option<T> {
-        let value: toml::Value = toml::from_str(&self.content).ok()?;
-        let mut current = &value;
+        let mut current = &self.parsed;
 
         for part in key.split('.') {
             current = current.get(part)?;
@@ -166,7 +176,7 @@ pub trait FromTomlValue: Sized {
 
 impl FromTomlValue for String {
     fn from_toml_value(value: &toml::Value) -> Option<Self> {
-        value.as_str().map(String::from)
+        value.as_str().map(Self::from)
     }
 }
 
@@ -191,6 +201,14 @@ impl FromTomlValue for bool {
 impl FromTomlValue for toml::Value {
     fn from_toml_value(value: &toml::Value) -> Option<Self> {
         Some(value.clone())
+    }
+}
+
+impl<T: FromTomlValue> FromTomlValue for Vec<T> {
+    fn from_toml_value(value: &toml::Value) -> Option<Self> {
+        value
+            .as_array()
+            .map(|arr| arr.iter().filter_map(T::from_toml_value).collect())
     }
 }
 
@@ -234,10 +252,9 @@ impl ConfigBuilder {
     /// Build the configuration.
     #[must_use]
     pub fn build(self) -> Config {
-        let value = toml::Value::Table(self.values);
-        Config {
-            content: toml::to_string_pretty(&value).unwrap_or_default(),
-        }
+        let parsed = toml::Value::Table(self.values);
+        let content = toml::to_string_pretty(&parsed).unwrap_or_default();
+        Config { content, parsed }
     }
 }
 
@@ -279,6 +296,22 @@ mod tests {
             Some("localhost".into())
         );
         assert_eq!(config.get::<i64>("server.port"), Some(3000));
+    }
+
+    #[test]
+    fn test_get_array() {
+        let config = Config::new(
+            r#"
+            allowed_hosts = ["localhost", "127.0.0.1"]
+            ports = [8080, 8443]
+        "#,
+        );
+        assert_eq!(
+            config.get::<Vec<String>>("allowed_hosts"),
+            Some(vec!["localhost".to_string(), "127.0.0.1".to_string()])
+        );
+        assert_eq!(config.get::<Vec<i64>>("ports"), Some(vec![8080, 8443]));
+        assert_eq!(config.get::<Vec<String>>("missing"), None);
     }
 
     #[test]
