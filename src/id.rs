@@ -302,4 +302,34 @@ mod tests {
         let ts_ids: HashSet<String> = (0..100).map(|_| generate_timestamp_id()).collect();
         assert_eq!(ts_ids.len(), 100);
     }
+
+    #[test]
+    fn test_generate_id_random_hex_format() {
+        let id = generate_id(IdFormat::RandomHex);
+        assert_eq!(id.len(), 32);
+        assert!(id.chars().all(|c| c.is_ascii_hexdigit()));
+    }
+
+    #[test]
+    fn test_generate_id_timestamp_format() {
+        let id = generate_id(IdFormat::Timestamp);
+        assert_eq!(id.len(), 20);
+        assert!(id.chars().all(|c| c.is_ascii_digit()));
+    }
+
+    #[test]
+    fn test_generate_id_prefixed_format() {
+        // IdFormat::Prefixed uses the same path as Timestamp
+        let id = generate_id(IdFormat::Prefixed);
+        assert_eq!(id.len(), 20);
+        assert!(id.chars().all(|c| c.is_ascii_digit()));
+    }
+
+    #[test]
+    fn test_id_generator_without_prefix() {
+        let generator = IdGenerator::new().with_format(IdFormat::RandomHex);
+        let id = generator.generate();
+        // No prefix, just the raw hex
+        assert_eq!(id.len(), 32);
+    }
 }

@@ -155,4 +155,65 @@ mod tests {
         assert_eq!(format_duration(Duration::from_secs(65)), "1m 5s");
         assert_eq!(format_duration(Duration::from_secs(3665)), "1h 1m");
     }
+
+    #[test]
+    fn test_unix_timestamp() {
+        let ts = unix_timestamp();
+        assert!(ts > 0);
+    }
+
+    #[test]
+    fn test_unix_timestamp_millis() {
+        let ts = unix_timestamp_millis();
+        assert!(ts > 0);
+    }
+
+    #[test]
+    fn test_format_duration_days() {
+        // 2 days + 3 hours
+        let d = Duration::from_secs(2 * 86400 + 3 * 3600);
+        assert_eq!(format_duration(d), "2d 3h");
+    }
+
+    #[test]
+    fn test_parse_single_duration_bare_number() {
+        // Bare number is treated as fractional seconds
+        let d = parse_duration("1.5").unwrap();
+        assert_eq!(d, Duration::from_secs_f64(1.5));
+    }
+
+    #[test]
+    fn test_parse_duration_invalid_ms() {
+        let result = parse_duration("abcms");
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("Invalid milliseconds"));
+    }
+
+    #[test]
+    fn test_parse_duration_invalid_seconds() {
+        let result = parse_duration("xyzs");
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("Invalid seconds"));
+    }
+
+    #[test]
+    fn test_parse_duration_invalid_minutes() {
+        let result = parse_duration("badm");
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("Invalid minutes"));
+    }
+
+    #[test]
+    fn test_parse_duration_invalid_hours() {
+        let result = parse_duration("badh");
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("Invalid hours"));
+    }
+
+    #[test]
+    fn test_parse_duration_invalid_days() {
+        let result = parse_duration("badd");
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("Invalid days"));
+    }
 }
