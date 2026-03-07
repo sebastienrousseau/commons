@@ -84,7 +84,7 @@ impl BackoffStrategy {
             } => {
                 let mult = multiplier.powi(attempt as i32);
                 let delay_nanos = initial.as_nanos() as f64 * mult;
-                let delay = Duration::from_nanos(delay_nanos as u64);
+                let delay = Duration::from_nanos(delay_nanos.round() as u64);
                 delay.min(*max)
             }
         }

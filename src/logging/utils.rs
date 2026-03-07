@@ -437,6 +437,7 @@ mod tests {
 
     #[cfg(feature = "logging-tokio")]
     #[tokio::test]
+    #[cfg_attr(miri, ignore)]
     async fn test_is_file_writable_existing_file() {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("writable.txt");
@@ -446,6 +447,7 @@ mod tests {
 
     #[cfg(feature = "logging-tokio")]
     #[tokio::test]
+    #[cfg_attr(miri, ignore)]
     async fn test_is_file_writable_nonexistent_creates() {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("new_file.txt");
@@ -456,6 +458,7 @@ mod tests {
 
     #[cfg(feature = "logging-tokio")]
     #[tokio::test]
+    #[cfg_attr(miri, ignore)]
     async fn test_truncate_file_smaller() {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("truncate.txt");
@@ -470,6 +473,7 @@ mod tests {
 
     #[cfg(feature = "logging-tokio")]
     #[tokio::test]
+    #[cfg_attr(miri, ignore)]
     async fn test_truncate_file_larger_than_content() {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("truncate2.txt");
@@ -481,6 +485,7 @@ mod tests {
 
     #[cfg(feature = "logging-tokio")]
     #[tokio::test]
+    #[cfg_attr(miri, ignore)]
     async fn test_is_directory_writable() {
         let dir = tempfile::tempdir().unwrap();
         assert!(is_directory_writable(dir.path()).await.unwrap());
@@ -488,6 +493,7 @@ mod tests {
 
     #[cfg(feature = "logging-tokio")]
     #[tokio::test]
+    #[cfg_attr(miri, ignore)]
     async fn test_is_directory_writable_not_a_dir() {
         let dir = tempfile::tempdir().unwrap();
         let file_path = dir.path().join("not_a_dir.txt");
@@ -497,6 +503,7 @@ mod tests {
 
     #[cfg(feature = "logging-tokio")]
     #[tokio::test]
+    #[cfg_attr(miri, ignore)]
     async fn test_truncate_file_exact_size() {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("exact.txt");
@@ -508,6 +515,7 @@ mod tests {
 
     #[cfg(feature = "logging-tokio")]
     #[tokio::test]
+    #[cfg_attr(miri, ignore)]
     async fn test_truncate_file_nonexistent_creates() {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("new_truncate.txt");
