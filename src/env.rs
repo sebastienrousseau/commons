@@ -341,4 +341,264 @@ mod tests {
         assert!(result.is_err());
         assert!(matches!(result.unwrap_err(), EnvError::NotSet(_)));
     }
+
+    use serial_test::serial;
+
+    #[test]
+    #[serial]
+    fn test_get_string_when_set() {
+        #[allow(unsafe_code)]
+        unsafe {
+            env::set_var("TEST_GET_STRING", "hello");
+        }
+        assert_eq!(get_string("TEST_GET_STRING"), Some("hello".to_string()));
+        #[allow(unsafe_code)]
+        unsafe {
+            env::remove_var("TEST_GET_STRING");
+        }
+    }
+
+    #[test]
+    #[serial]
+    fn test_get_string_when_empty() {
+        #[allow(unsafe_code)]
+        unsafe {
+            env::set_var("TEST_GET_STRING_EMPTY", "");
+        }
+        assert_eq!(get_string("TEST_GET_STRING_EMPTY"), None);
+        #[allow(unsafe_code)]
+        unsafe {
+            env::remove_var("TEST_GET_STRING_EMPTY");
+        }
+    }
+
+    #[test]
+    #[serial]
+    fn test_get_bool_true_variants() {
+        for val in &["true", "1", "yes", "on", "TRUE"] {
+            #[allow(unsafe_code)]
+            unsafe {
+                env::set_var("TEST_GET_BOOL", val);
+            }
+            assert!(get_bool("TEST_GET_BOOL"), "Expected true for value: {val}");
+        }
+        #[allow(unsafe_code)]
+        unsafe {
+            env::remove_var("TEST_GET_BOOL");
+        }
+    }
+
+    #[test]
+    #[serial]
+    fn test_get_bool_false_variant() {
+        #[allow(unsafe_code)]
+        unsafe {
+            env::set_var("TEST_GET_BOOL_FALSE", "false");
+        }
+        assert!(!get_bool("TEST_GET_BOOL_FALSE"));
+        #[allow(unsafe_code)]
+        unsafe {
+            env::remove_var("TEST_GET_BOOL_FALSE");
+        }
+    }
+
+    #[test]
+    #[serial]
+    fn test_get_list_when_set() {
+        #[allow(unsafe_code)]
+        unsafe {
+            env::set_var("TEST_GET_LIST", "a,b,c");
+        }
+        let list = get_list("TEST_GET_LIST", ",");
+        assert_eq!(list, vec!["a", "b", "c"]);
+        #[allow(unsafe_code)]
+        unsafe {
+            env::remove_var("TEST_GET_LIST");
+        }
+    }
+
+    #[test]
+    #[serial]
+    fn test_is_set_when_set() {
+        #[allow(unsafe_code)]
+        unsafe {
+            env::set_var("TEST_IS_SET", "value");
+        }
+        assert!(is_set("TEST_IS_SET"));
+        #[allow(unsafe_code)]
+        unsafe {
+            env::remove_var("TEST_IS_SET");
+        }
+    }
+
+    #[test]
+    #[serial]
+    fn test_get_environment_when_env_set() {
+        #[allow(unsafe_code)]
+        unsafe {
+            env::set_var("ENV", "staging");
+        }
+        assert_eq!(get_environment(), "staging");
+        #[allow(unsafe_code)]
+        unsafe {
+            env::remove_var("ENV");
+        }
+    }
+
+    #[test]
+    #[serial]
+    fn test_is_production() {
+        // Clean all env keys that get_environment checks
+        #[allow(unsafe_code)]
+        unsafe {
+            env::remove_var("ENV");
+            env::remove_var("ENVIRONMENT");
+            env::remove_var("RUST_ENV");
+            env::remove_var("APP_ENV");
+        }
+
+        #[allow(unsafe_code)]
+        unsafe {
+            env::set_var("ENV", "production");
+        }
+        assert!(is_production());
+
+        #[allow(unsafe_code)]
+        unsafe {
+            env::set_var("ENV", "prod");
+        }
+        assert!(is_production());
+
+        #[allow(unsafe_code)]
+        unsafe {
+            env::remove_var("ENV");
+        }
+    }
+
+    #[test]
+    #[serial]
+    fn test_is_development() {
+        #[allow(unsafe_code)]
+        unsafe {
+            env::remove_var("ENV");
+            env::remove_var("ENVIRONMENT");
+            env::remove_var("RUST_ENV");
+            env::remove_var("APP_ENV");
+        }
+
+        #[allow(unsafe_code)]
+        unsafe {
+            env::set_var("ENV", "development");
+        }
+        assert!(is_development());
+
+        #[allow(unsafe_code)]
+        unsafe {
+            env::set_var("ENV", "dev");
+        }
+        assert!(is_development());
+
+        #[allow(unsafe_code)]
+        unsafe {
+            env::remove_var("ENV");
+        }
+    }
+
+    #[test]
+    #[serial]
+    fn test_is_test() {
+        #[allow(unsafe_code)]
+        unsafe {
+            env::remove_var("ENV");
+            env::remove_var("ENVIRONMENT");
+            env::remove_var("RUST_ENV");
+            env::remove_var("APP_ENV");
+        }
+
+        #[allow(unsafe_code)]
+        unsafe {
+            env::set_var("ENV", "test");
+        }
+        assert!(is_test());
+
+        #[allow(unsafe_code)]
+        unsafe {
+            env::set_var("ENV", "testing");
+        }
+        assert!(is_test());
+
+        #[allow(unsafe_code)]
+        unsafe {
+            env::remove_var("ENV");
+        }
+    }
+
+    #[test]
+    #[serial]
+    fn test_try_get_env_parse_error() {
+        #[allow(unsafe_code)]
+        unsafe {
+            env::set_var("TEST_TRY_PARSE", "not_a_number");
+        }
+        let result: Result<u32, EnvError> = try_get_env("TEST_TRY_PARSE");
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), EnvError::ParseError { .. }));
+        #[allow(unsafe_code)]
+        unsafe {
+            env::remove_var("TEST_TRY_PARSE");
+        }
+    }
+
+    #[test]
+    #[serial]
+    fn test_try_get_env_empty_string() {
+        #[allow(unsafe_code)]
+        unsafe {
+            env::set_var("TEST_TRY_EMPTY", "");
+        }
+        let result: Result<String, EnvError> = try_get_env("TEST_TRY_EMPTY");
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), EnvError::Empty(_)));
+        #[allow(unsafe_code)]
+        unsafe {
+            env::remove_var("TEST_TRY_EMPTY");
+        }
+    }
+
+    #[test]
+    #[serial]
+    fn test_require_env_success() {
+        #[allow(unsafe_code)]
+        unsafe {
+            env::set_var("TEST_REQUIRE_OK", "42");
+        }
+        let val: u32 = require_env("TEST_REQUIRE_OK");
+        assert_eq!(val, 42);
+        #[allow(unsafe_code)]
+        unsafe {
+            env::remove_var("TEST_REQUIRE_OK");
+        }
+    }
+
+    #[test]
+    fn test_env_error_display_not_set() {
+        let err = EnvError::NotSet("MY_VAR".to_string());
+        assert_eq!(err.to_string(), "Environment variable not set: MY_VAR");
+    }
+
+    #[test]
+    fn test_env_error_display_parse_error() {
+        let err = EnvError::ParseError {
+            var: "PORT".to_string(),
+            value: "abc".to_string(),
+            expected: "u16".to_string(),
+        };
+        assert_eq!(err.to_string(), "Cannot parse PORT=abc as u16");
+    }
+
+    #[test]
+    fn test_env_error_display_empty() {
+        let err = EnvError::Empty("MY_VAR".to_string());
+        assert_eq!(err.to_string(), "Environment variable is empty: MY_VAR");
+    }
 }

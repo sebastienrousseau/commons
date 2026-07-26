@@ -16,7 +16,7 @@ name = "euxis-commons"
 readme = "README.md"
 repository = "https://github.com/sebastienrousseau/commons"
 rust-version = "1.88.0"
-version = "0.0.2"
+version = "0.0.3"
 include = [
     "/LICENSE-APACHE",
     "/LICENSE-MIT",
@@ -36,7 +36,17 @@ default = ["full"]
 full = ["config", "error", "logging", "time", "collections", "validation", "retry", "id", "env", "fs"]
 config = ["serde", "toml"]
 error = ["thiserror"]
-logging = ["time"]
+logging = [
+    "time", "error", "serde", "toml",
+    "dep:crossbeam-queue", "dep:dtt", "dep:parking_lot",
+    "dep:serde_json", "dep:log", "dep:tracing-core",
+    "dep:hostname", "dep:regex", "dep:itoa", "dep:ryu",
+    "dep:config_crate", "dep:envy",
+]
+logging-tokio = ["logging", "dep:tokio", "dep:notify"]
+logging-tui = ["logging", "dep:terminal_size"]
+logging-miette = ["logging", "dep:miette"]
+logging-tracing-layer = ["logging", "dep:tracing-subscriber"]
 time = []
 collections = []
 validation = []
@@ -46,12 +56,35 @@ env = []
 fs = []
 
 [dependencies]
+# Existing
 thiserror = { version = "2.0", optional = true }
 serde = { version = "1.0", features = ["derive"], optional = true }
 toml = { version = "0.8", optional = true }
 
+# Logging: core engine
+crossbeam-queue = { version = "0.3.12", optional = true }
+dtt = { version = "0.0.9", optional = true }
+parking_lot = { version = "0.12.5", optional = true }
+serde_json = { version = "1.0", optional = true }
+log = { version = "0.4.29", optional = true }
+tracing-core = { version = "0.1.36", optional = true }
+hostname = { version = "0.4.2", optional = true }
+regex = { version = "1.12", optional = true }
+itoa = { version = "1.0", optional = true }
+ryu = { version = "1.0", optional = true }
+config_crate = { package = "config", version = "0.15", optional = true }
+envy = { version = "0.4.2", optional = true }
+
+# Logging: optional sub-features
+tokio = { version = "1.50.0", features = ["full"], optional = true }
+notify = { version = "8.2.0", optional = true }
+terminal_size = { version = "0.4", optional = true }
+miette = { version = "7.5.0", features = ["fancy"], optional = true }
+tracing-subscriber = { version = "0.3", default-features = false, features = ["registry"], optional = true }
+
 [dev-dependencies]
 tempfile = "3.15"
+serial_test = "3"
 
 [package.metadata.docs.rs]
 # Build docs with all crate features enabled to cover the entire API.

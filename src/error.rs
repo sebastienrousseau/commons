@@ -148,4 +148,75 @@ mod tests {
         let common_result = result.with_context("Reading file");
         assert!(common_result.is_err());
     }
+
+    #[test]
+    fn test_config_constructor() {
+        let err = CommonError::config("bad config");
+        assert_eq!(err.to_string(), "Configuration error: bad config");
+        assert!(!err.is_input_error());
+        assert!(!err.is_recoverable());
+    }
+
+    #[test]
+    fn test_parse_constructor() {
+        let err = CommonError::parse("bad format");
+        assert_eq!(err.to_string(), "Parse error: bad format");
+        assert!(err.is_input_error());
+    }
+
+    #[test]
+    fn test_not_found_constructor() {
+        let err = CommonError::not_found("missing.txt");
+        assert_eq!(err.to_string(), "Not found: missing.txt");
+    }
+
+    #[test]
+    fn test_custom_constructor() {
+        let err = CommonError::custom("something went wrong");
+        assert_eq!(err.to_string(), "something went wrong");
+    }
+
+    #[test]
+    fn test_is_recoverable_timeout() {
+        let err = CommonError::Timeout("timed out".into());
+        assert!(err.is_recoverable());
+    }
+
+    #[test]
+    fn test_is_recoverable_external() {
+        let err = CommonError::External("service down".into());
+        assert!(err.is_recoverable());
+    }
+
+    #[test]
+    fn test_permission_denied_display() {
+        let err = CommonError::PermissionDenied("forbidden".into());
+        assert_eq!(err.to_string(), "Permission denied: forbidden");
+    }
+
+    #[test]
+    fn test_timeout_display() {
+        let err = CommonError::Timeout("took too long".into());
+        assert_eq!(err.to_string(), "Timeout: took too long");
+    }
+
+    #[test]
+    fn test_external_display() {
+        let err = CommonError::External("upstream failure".into());
+        assert_eq!(err.to_string(), "External error: upstream failure");
+    }
+
+    #[test]
+    fn test_from_io_error() {
+        let io_err = std::io::Error::new(std::io::ErrorKind::PermissionDenied, "access denied");
+        let common_err: CommonError = io_err.into();
+        assert!(common_err.to_string().contains("access denied"));
+    }
+
+    #[test]
+    fn test_with_context_ok_case() {
+        let result: Result<i32, std::io::Error> = Ok(42);
+        let common_result = result.with_context("should pass through");
+        assert_eq!(common_result.unwrap(), 42);
+    }
 }
