@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["LogRotation","LoggingConfigError","LoggingDestination"],"struct":["LoggingConfig"]};

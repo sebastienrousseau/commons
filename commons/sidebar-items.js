@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["VERSION"],"fn":["version"],"macro":["logger"],"mod":["collections","config","env","error","fs","id","logging","prelude","retry","time","validation"]};
+window.SIDEBAR_ITEMS = {"constant":["VERSION"],"fn":["version"],"macro":[["logger",1],["logging_mcp_notify",1],["logging_span",1],["logging_time_it",1]],"mod":["collections","config","env","error","fs","id","logging","prelude","retry","time","validation"]};

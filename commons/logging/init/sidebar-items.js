@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["InitError"],"fn":["builder","init"],"struct":["FlushGuard","LoggingBuilder"]};

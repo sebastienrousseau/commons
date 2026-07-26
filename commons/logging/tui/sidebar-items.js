@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["build_fmt_line","compute_level_bars","get_terminal_height_of","render_tick","spawn_tui_thread"],"struct":["TuiMetrics"]};

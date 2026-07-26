@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["LogLevel"],"struct":["Logger"]};
+window.SIDEBAR_ITEMS = {"mod":["engine","init","log_config","log_entry","log_error","log_format","log_level","logger","macros","rotation","sink","tracing_bridge","tui","utils"],"struct":["Logger"]};
