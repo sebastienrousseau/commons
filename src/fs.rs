@@ -86,7 +86,7 @@ pub fn is_wsl() -> bool {
 /// Always returns `false` on non-Linux platforms.
 #[must_use]
 #[cfg(not(target_os = "linux"))]
-pub fn is_wsl() -> bool {
+pub const fn is_wsl() -> bool {
     false
 }
 

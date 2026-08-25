@@ -41,7 +41,7 @@ impl RotatingFile {
     /// Returns `io::Error` if the file cannot be opened or created.
     pub fn open(path: &Path, policy: LogRotation) -> io::Result<Self> {
         let file = OpenOptions::new().create(true).append(true).open(path)?;
-        let bytes_written = file.metadata().map(|m| m.len()).unwrap_or(0);
+        let bytes_written = file.metadata().map_or(0, |m| m.len());
         Ok(Self {
             file,
             path: path.to_path_buf(),
