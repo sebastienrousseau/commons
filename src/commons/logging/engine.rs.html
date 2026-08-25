@@ -127,7 +127,7 @@
 <a href=#127 id=127 data-nosnippet>127</a>                        }
 <a href=#128 id=128 data-nosnippet>128</a>                        <span class="kw">for </span>event <span class="kw">in </span>batch.iter().flatten() {
 <a href=#129 id=129 data-nosnippet>129</a>                            fmt_buf.clear();
-<a href=#130 id=130 data-nosnippet>130</a>                            <span class="kw">let _ </span>= <span class="macro">writeln!</span>(fmt_buf, <span class="string">"{}"</span>, <span class="kw-2">&amp;</span>event.log);
+<a href=#130 id=130 data-nosnippet>130</a>                            <span class="kw">let _ </span>= <span class="macro">writeln!</span>(fmt_buf, <span class="string">"{}"</span>, event.log);
 <a href=#131 id=131 data-nosnippet>131</a>                            sink.emit(event.level.as_str(), <span class="kw-2">&amp;</span>fmt_buf);
 <a href=#132 id=132 data-nosnippet>132</a>                        }
 <a href=#133 id=133 data-nosnippet>133</a>
@@ -142,7 +142,7 @@
 <a href=#142 id=142 data-nosnippet>142</a>                .expect(<span class="string">"Failed to spawn logging-flusher background thread"</span>);
 <a href=#143 id=143 data-nosnippet>143</a>
 <a href=#144 id=144 data-nosnippet>144</a>            <span class="comment">// Spawn the TUI dashboard thread if RLG_TUI=1
-<a href=#145 id=145 data-nosnippet>145</a>            </span><span class="kw">if </span>std::env::var(<span class="string">"RLG_TUI"</span>).map(|v| v == <span class="string">"1"</span>).unwrap_or(<span class="bool-val">false</span>) {
+<a href=#145 id=145 data-nosnippet>145</a>            </span><span class="kw">if </span>std::env::var(<span class="string">"RLG_TUI"</span>).is_ok_and(|v| v == <span class="string">"1"</span>) {
 <a href=#146 id=146 data-nosnippet>146</a>                spawn_tui_thread(metrics.clone(), shutdown_flag.clone());
 <a href=#147 id=147 data-nosnippet>147</a>            }
 <a href=#148 id=148 data-nosnippet>148</a>

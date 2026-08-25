@@ -41,7 +41,7 @@
 <a href=#41 id=41 data-nosnippet>41</a>    /// Returns `io::Error` if the file cannot be opened or created.
 <a href=#42 id=42 data-nosnippet>42</a>    </span><span class="kw">pub fn </span>open(path: <span class="kw-2">&amp;</span>Path, policy: LogRotation) -&gt; io::Result&lt;<span class="self">Self</span>&gt; {
 <a href=#43 id=43 data-nosnippet>43</a>        <span class="kw">let </span>file = OpenOptions::new().create(<span class="bool-val">true</span>).append(<span class="bool-val">true</span>).open(path)<span class="question-mark">?</span>;
-<a href=#44 id=44 data-nosnippet>44</a>        <span class="kw">let </span>bytes_written = file.metadata().map(|m| m.len()).unwrap_or(<span class="number">0</span>);
+<a href=#44 id=44 data-nosnippet>44</a>        <span class="kw">let </span>bytes_written = file.metadata().map_or(<span class="number">0</span>, |m| m.len());
 <a href=#45 id=45 data-nosnippet>45</a>        <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
 <a href=#46 id=46 data-nosnippet>46</a>            file,
 <a href=#47 id=47 data-nosnippet>47</a>            path: path.to_path_buf(),
