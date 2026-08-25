@@ -150,6 +150,15 @@ impl PlatformSink {
     }
 
     /// Write a formatted log payload to this sink.
+    ///
+    /// # Panics
+    ///
+    /// On macOS, panics if the fixed subsystem and category strings used to
+    /// build the `os_log` handle cannot be converted to `CString`. Both are
+    /// string literals with no interior null bytes, so this cannot happen at
+    /// run time. The caller-supplied `payload` is not a panic source: null
+    /// bytes are stripped from it and the conversion falls back to an empty
+    /// string.
     #[allow(unused_variables)]
     #[allow(clippy::too_many_lines)]
     pub fn emit(&mut self, level: &str, payload: &[u8]) {
@@ -172,7 +181,11 @@ impl PlatformSink {
                     } else {
                         #[cfg(not(any(test, miri)))]
                         {
-                            use macos_ffi::*;
+                            use macos_ffi::{
+                                _os_log_impl, OS_LOG_TYPE_DEBUG, OS_LOG_TYPE_DEFAULT,
+                                OS_LOG_TYPE_ERROR, OS_LOG_TYPE_FAULT, OS_LOG_TYPE_INFO,
+                                os_log_create,
+                            };
                             use std::ffi::CString;
 
                             let subsystem = CString::new("com.euxis.logging").unwrap();
@@ -194,9 +207,9 @@ impl PlatformSink {
                                 let log_type = match level {
                                     "ERROR" | "FATAL" => OS_LOG_TYPE_ERROR,
                                     "CRITICAL" => OS_LOG_TYPE_FAULT,
-                                    "WARN" => OS_LOG_TYPE_DEFAULT,
                                     "INFO" => OS_LOG_TYPE_INFO,
                                     "DEBUG" | "TRACE" | "VERBOSE" => OS_LOG_TYPE_DEBUG,
+                                    // "WARN" shares the wildcard's default.
                                     _ => OS_LOG_TYPE_DEFAULT,
                                 };
 
@@ -212,7 +225,9 @@ impl PlatformSink {
                                     log_type,
                                     format.as_ptr(),
                                     msg.as_ptr().cast::<u8>(),
-                                    msg.as_bytes().len() as u32,
+                                    // A single log line never approaches 4 GiB;
+                                    // saturate rather than wrap if one somehow did.
+                                    u32::try_from(msg.as_bytes().len()).unwrap_or(u32::MAX),
                                 );
                             }
                         }

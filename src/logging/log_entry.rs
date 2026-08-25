@@ -303,7 +303,7 @@ impl Log {
         write!(
             f,
             "{} - - [{}] \"{}\" {} {}",
-            &*CACHED_HOSTNAME, self.time, self.description, self.level, self.component
+            *CACHED_HOSTNAME, self.time, self.description, self.level, self.component
         )
     }
 
