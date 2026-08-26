@@ -16,7 +16,7 @@ name = "euxis-commons"
 readme = "README.md"
 repository = "https://github.com/sebastienrousseau/commons"
 rust-version = "1.88.0"
-version = "0.0.3"
+version = "0.0.4"
 include = [
     "/LICENSE-APACHE",
     "/LICENSE-MIT",
@@ -33,7 +33,7 @@ path = "src/lib.rs"
 
 [features]
 default = ["full"]
-full = ["config", "error", "logging", "time", "collections", "validation", "retry", "id", "env", "fs"]
+full = ["config", "error", "logging", "time", "collections", "validation", "retry", "id", "env", "fs", "counter"]
 # `config` derives thiserror::Error, so it needs the `error` feature
 # that pulls that dependency in.
 config = ["serde", "toml", "error"]
@@ -50,6 +50,8 @@ logging-tui = ["logging", "dep:terminal_size"]
 logging-miette = ["logging", "dep:miette"]
 logging-tracing-layer = ["logging", "dep:tracing-subscriber"]
 time = []
+# Portable monotonic counters; also pulled in by `id` and `logging`.
+counter = []
 collections = []
 validation = []
 retry = []

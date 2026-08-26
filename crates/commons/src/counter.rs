@@ -17,30 +17,23 @@
 //! module, because a re-export would be either an unreachable `pub` or a
 //! redundant `pub(crate)` -- both denied by this crate's lints.
 
-// This module is private and its items are crate-internal, which the two
-// visibility lints disagree about: `pub` items here trip `unreachable_pub`
-// because nothing outside the crate can name them, while `pub(crate)`
-// items trip `redundant_pub_crate` because the module is already private.
-// No visibility satisfies both, so the narrower one is kept and the
-// clippy lint is suppressed for this file only.
-#![allow(clippy::redundant_pub_crate)]
-
 use std::sync::atomic::Ordering;
 
 /// Lock-free counter, used wherever the target has 64-bit atomics.
 #[cfg(target_has_atomic = "64")]
 #[derive(Debug)]
-pub(crate) struct Counter(std::sync::atomic::AtomicU64);
+pub struct Counter(std::sync::atomic::AtomicU64);
 
 #[cfg(target_has_atomic = "64")]
 impl Counter {
     /// Creates a counter starting at `value`.
-    pub(crate) const fn new(value: u64) -> Self {
+    #[must_use]
+    pub const fn new(value: u64) -> Self {
         Self(std::sync::atomic::AtomicU64::new(value))
     }
 
     /// Adds `value` and returns the previous value.
-    pub(crate) fn fetch_add(&self, value: u64, order: Ordering) -> u64 {
+    pub fn fetch_add(&self, value: u64, order: Ordering) -> u64 {
         self.0.fetch_add(value, order)
     }
 }
@@ -48,12 +41,13 @@ impl Counter {
 /// Mutex-backed counter for targets without 64-bit atomics.
 #[cfg(not(target_has_atomic = "64"))]
 #[derive(Debug)]
-pub(crate) struct Counter(std::sync::Mutex<u64>);
+pub struct Counter(std::sync::Mutex<u64>);
 
 #[cfg(not(target_has_atomic = "64"))]
 impl Counter {
     /// Creates a counter starting at `value`.
-    pub(crate) const fn new(value: u64) -> Self {
+    #[must_use]
+    pub const fn new(value: u64) -> Self {
         Self(std::sync::Mutex::new(value))
     }
 
@@ -63,7 +57,7 @@ impl Counter {
     /// mutex already provides the necessary synchronisation. A poisoned
     /// lock is recovered from rather than panicking, since a counter has
     /// no invariant a panicking writer could corrupt.
-    pub(crate) fn fetch_add(&self, value: u64, _order: Ordering) -> u64 {
+    pub fn fetch_add(&self, value: u64, _order: Ordering) -> u64 {
         let mut guard = self.0.lock().unwrap_or_else(|e| e.into_inner());
         let previous = *guard;
         *guard = previous.wrapping_add(value);

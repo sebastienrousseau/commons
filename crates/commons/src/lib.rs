@@ -43,11 +43,9 @@
 #![warn(clippy::all)]
 
 /// Portable monotonic counters for targets without 64-bit atomics.
-///
-/// Private implementation detail, gated on the features that use it so
-/// it is not dead code when they are all disabled.
-#[cfg(any(feature = "id", feature = "logging"))]
-mod counter;
+#[cfg(any(feature = "counter", feature = "id", feature = "logging"))]
+#[cfg_attr(docsrs, doc(cfg(feature = "counter")))]
+pub mod counter;
 
 #[cfg(feature = "config")]
 #[cfg_attr(docsrs, doc(cfg(feature = "config")))]
