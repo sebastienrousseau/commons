@@ -1,2 +1,2 @@
-createSrcSidebar('[["commons",["",[["logging",[],["engine.rs","init.rs","log_config.rs","log_entry.rs","log_error.rs","log_format.rs","log_level.rs","logger.rs","macros.rs","mod.rs","rotation.rs","sink.rs","tracing_bridge.rs","tui.rs","utils.rs"]]],["collections.rs","config.rs","env.rs","error.rs","fs.rs","id.rs","lib.rs","retry.rs","time.rs","validation.rs"]]]]');
-//{"start":19,"fragment_lengths":[344]}
+createSrcSidebar('[["commons",["",[["logging",[],["engine.rs","init.rs","log_config.rs","log_entry.rs","log_error.rs","log_format.rs","log_level.rs","logger.rs","macros.rs","mod.rs","rotation.rs","sink.rs","tracing_bridge.rs","tui.rs","utils.rs"]]],["collections.rs","config.rs","counter.rs","env.rs","error.rs","fs.rs","id.rs","lib.rs","retry.rs","time.rs","validation.rs"]]]]');
+//{"start":19,"fragment_lengths":[357]}
