@@ -44,6 +44,9 @@
 
 #[cfg(feature = "config")]
 #[cfg_attr(docsrs, doc(cfg(feature = "config")))]
+/// Portable monotonic counters for targets without 64-bit atomics.
+mod counter;
+
 pub mod config;
 
 #[cfg(feature = "error")]

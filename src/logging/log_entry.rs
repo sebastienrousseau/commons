@@ -6,16 +6,17 @@
 
 use super::log_format::LogFormat;
 use super::log_level::LogLevel;
+use crate::counter::Counter;
 use dtt::datetime::DateTime;
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::collections::BTreeMap;
 use std::fmt;
 use std::sync::LazyLock;
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::atomic::Ordering;
 
 /// Monotonic session ID counter. Incremented atomically per `build()` call.
-static SESSION_COUNTER: AtomicU64 = AtomicU64::new(1);
+static SESSION_COUNTER: Counter = Counter::new(1);
 
 /// Hostname, resolved once and cached for the process lifetime.
 static CACHED_HOSTNAME: LazyLock<String> = LazyLock::new(|| {
