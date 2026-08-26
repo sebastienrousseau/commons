@@ -34,7 +34,9 @@ path = "src/lib.rs"
 [features]
 default = ["full"]
 full = ["config", "error", "logging", "time", "collections", "validation", "retry", "id", "env", "fs"]
-config = ["serde", "toml"]
+# `config` derives thiserror::Error, so it needs the `error` feature
+# that pulls that dependency in.
+config = ["serde", "toml", "error"]
 error = ["thiserror"]
 logging = [
     "time", "error", "serde", "toml",

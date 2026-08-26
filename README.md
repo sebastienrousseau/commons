@@ -1,282 +1,236 @@
+<!-- SPDX-License-Identifier: Apache-2.0 OR MIT -->
+
 <p align="center">
   <img src="https://kura.pro/euxis/images/logos/euxis.svg" alt="EUXIS Commons logo" width="128" />
 </p>
 
-<h1 align="center">EUXIS Commons</h1>
+<h1 align="center">euxis-commons</h1>
 
 <p align="center">
-  <strong>The foundation crate for the EUXIS ecosystem. Batteries-included utilities for error handling, configuration, validation, retry logic, ID generation, and cross-platform filesystem operations.</strong>
+  Shared Rust utilities for the EUXIS ecosystem &mdash; configuration,
+  errors, logging, validation, retries, identifiers and filesystem
+  helpers, each behind its own feature flag.
 </p>
 
 <p align="center">
-  <a href="https://github.com/sebastienrousseau/commons/actions">
-    <img src="https://img.shields.io/github/actions/workflow/status/sebastienrousseau/commons/ci.yml?style=for-the-badge&logo=github" alt="Build" />
-  </a>
-  <a href="https://crates.io/crates/euxis-commons">
-    <img src="https://img.shields.io/crates/v/euxis-commons.svg?style=for-the-badge&color=fc8d62&logo=rust" alt="Crates.io" />
-  </a>
-  <a href="https://docs.rs/euxis-commons">
-    <img src="https://img.shields.io/badge/docs.rs-euxis--commons-66c2a5?style=for-the-badge&labelColor=555555&logo=docs.rs" alt="Docs" />
-  </a>
-  <a href="https://codecov.io/gh/sebastienrousseau/commons">
-    <img src="https://img.shields.io/codecov/c/github/sebastienrousseau/commons?style=for-the-badge&logo=codecov" alt="Coverage" />
-  </a>
-</p>
-
-<p align="center">
-  <em><strong>One crate, ten modules, zero external runtime dependencies</strong> &mdash; Share patterns across every project in the ecosystem without pulling in the kitchen sink.</em>
+  <a href="https://github.com/sebastienrousseau/commons/actions"><img src="https://img.shields.io/github/actions/workflow/status/sebastienrousseau/commons/ci.yml?style=for-the-badge&logo=github" alt="Build" /></a>
+  <a href="https://crates.io/crates/euxis-commons"><img src="https://img.shields.io/crates/v/euxis-commons.svg?style=for-the-badge&color=fc8d62&logo=rust" alt="Crates.io" /></a>
+  <a href="https://docs.rs/euxis-commons"><img src="https://img.shields.io/badge/docs.rs-euxis--commons-66c2a5?style=for-the-badge&labelColor=555555&logo=docs.rs" alt="Docs.rs" /></a>
+  <a href="https://codecov.io/gh/sebastienrousseau/commons"><img src="https://img.shields.io/codecov/c/github/sebastienrousseau/commons?style=for-the-badge&logo=codecov" alt="Coverage" /></a>
 </p>
 
 ---
 
-## Overview
+## Contents
 
-EUXIS Commons is the shared utility layer that powers every crate in the EUXIS ecosystem. Rather than scattering helper functions across repositories or pulling in heavyweight frameworks, Commons provides a curated, feature-gated set of modules that compile only what you use.
+**Getting started**
 
-## Why Commons?
+- [Install](#install) — Cargo, feature selection
+- [Quick start](#quick-start) — the three most common uses
 
-| Concern | Without Commons | With Commons |
-| :--- | :--- | :--- |
-| **Error Types** | Each crate invents its own | **Unified `CommonError` + `CommonResult`** |
-| **Config Loading** | Raw `toml::from_str` everywhere | **`Config::from_file` with typed getters** |
-| **Retry Logic** | Copy-pasted sleep loops | **Configurable backoff strategies** |
-| **ID Generation** | `uuid` + `rand` dependency bloat | **Zero-dep timestamp, hex, and short IDs** |
-| **Path Handling** | Manual `~` expansion, WSL hacks | **`resolve_path`, `to_wsl_path`, `from_wsl_path`** |
-| **Validation** | Ad-hoc regex checks | **`is_valid_email`, `is_valid_url`, `is_valid_semver`** |
+**Reference**
 
-## Architecture
+- [Modules](#modules) — what each one does, and its feature flag
+- [Features](#features) — the dependency graph, and what each costs
+- [Logging](#logging) — the engine, its sinks and twelve wire formats
+- [Benchmarks](#benchmarks) — measured numbers, and what is not measured
 
-```mermaid
-graph TD
-    A[Downstream Crate] -->|use commons::prelude::*| B{Feature Gates}
-    B --> C[config — TOML loading & typed getters]
-    B --> D[error — CommonError & Result aliases]
-    B --> E[logging — Timestamped structured logging]
-    B --> F[time — Duration parsing & formatting]
-    B --> G[collections — LRU cache]
-    B --> H[validation — Email, URL, semver, IP]
-    B --> I[retry — Exponential & linear backoff]
-    B --> J[id — Timestamp, hex, short & UUID-like IDs]
-    B --> K[env — Typed env vars & environment detection]
-    B --> L[fs — Tilde expansion, WSL paths, ensure_dir]
-```
+**Project**
 
-## Getting Started
+- [Documentation](#documentation) — architecture, testing, decisions
+- [Testing](#testing) — how to run it, including cfg-gated branches
+- [Platform support](#platform-support)
+- [MSRV](#minimum-supported-rust-version)
+- [Licence](#licence)
 
-### Pre-flight Checklist
-
-- [ ] Rust 1.88.0+ installed (`rustc --version`)
-- [ ] Cargo package manager ready
-
-### Install
-
-Add `euxis-commons` to your project:
-
-```bash
-cargo add euxis-commons
-```
-
-Or with specific features only:
+## Install
 
 ```toml
 [dependencies]
-euxis-commons = { version = "0.0.2", default-features = false, features = ["error", "time"] }
+euxis-commons = "0.0.3"
 ```
 
-## Features
+The default feature set (`full`) enables every module. Most consumers
+want less:
 
-All features are enabled by default via the `full` meta-feature. Disable `default-features` and pick only what you need to minimise compile times.
-
-| Feature | Description | Dependencies |
-| :--- | :--- | :--- |
-| `config` | TOML configuration loading with typed getters and `Vec<T>` array extraction | `serde`, `toml` |
-| `error` | Common error types and `Result` aliases | `thiserror` |
-| `logging` | Simple timestamped, level-filtered structured logging | `time` |
-| `time` | Duration parsing (including compound `"1h 30m"`) and formatting | &mdash; |
-| `collections` | LRU cache with capacity-bounded eviction | &mdash; |
-| `validation` | Email, URL (with localhost + port), semver (with pre-release), IP, identifier checks | &mdash; |
-| `retry` | Retry with constant, linear, and exponential backoff + jitter | &mdash; |
-| `id` | Timestamp-sortable, random hex, short base62, and UUID-like ID generation | &mdash; |
-| `env` | Typed env var access, boolean parsing, list splitting, environment detection | &mdash; |
-| `fs` | Tilde expansion, `ensure_dir`, WSL detection, bidirectional WSL path translation | &mdash; |
-
-## Usage
-
-<details>
-<summary><b>Error Handling</b></summary>
-
-```rust
-use commons::error::{CommonError, CommonResult};
-
-fn process_data(input: &str) -> CommonResult<String> {
-    if input.is_empty() {
-        return Err(CommonError::invalid_input("Input cannot be empty"));
-    }
-    Ok(input.to_uppercase())
-}
-```
-</details>
-
-<details>
-<summary><b>Configuration</b></summary>
-
-```rust
-use commons::config::Config;
-use serde::Deserialize;
-
-#[derive(Debug, Deserialize)]
-struct AppConfig {
-    name: String,
-    port: u16,
-}
-
-let config: AppConfig = Config::from_file("config.toml")?.parse()?;
+```toml
+# Just validation and retries — no logging stack, no serde.
+euxis-commons = { version = "0.0.3", default-features = false, features = ["validation", "retry"] }
 ```
 
-Arrays are supported out of the box:
+The library is imported as `commons`:
 
 ```rust
-let hosts: Option<Vec<String>> = config.get("allowed_hosts");
+use commons::validation::is_valid_email;
 ```
-</details>
 
-<details>
-<summary><b>Time & Duration Parsing</b></summary>
+## Quick start
 
 ```rust
-use commons::time::{format_duration, parse_duration};
+use commons::id::generate_prefixed_id;
+use commons::retry::{BackoffStrategy, RetryConfig};
+use commons::validation::is_valid_email;
 use std::time::Duration;
 
-// Single unit
-let d = parse_duration("5m").unwrap();
-assert_eq!(d, Duration::from_secs(300));
+// Identifiers — monotonic, collision-free within a millisecond.
+let order = generate_prefixed_id("order");
 
-// Compound expression
-let d = parse_duration("1h 30m").unwrap();
-assert_eq!(d, Duration::from_secs(5400));
+// Validation — `is_valid_*` answers yes/no, `validate_*` returns the
+// input so calls chain.
+assert!(is_valid_email("user@example.com"));
 
-let formatted = format_duration(Duration::from_secs(3665));
-assert_eq!(formatted, "1h 1m");
-```
-</details>
-
-<details>
-<summary><b>Retry with Backoff</b></summary>
-
-```rust
-use commons::retry::{retry, RetryConfig, BackoffStrategy};
-use std::time::Duration;
-
-let config = RetryConfig::new()
+// Retries — a policy describes *when* to retry; it does not run the work.
+let policy = RetryConfig::new()
     .max_attempts(5)
     .backoff(BackoffStrategy::Exponential {
         initial: Duration::from_millis(100),
-        max: Duration::from_secs(10),
+        max: Duration::from_secs(5),
         multiplier: 2.0,
     });
-
-let result = retry(config, || {
-    // Operation that might fail
-    Ok::<_, &str>("success")
-});
-```
-</details>
-
-<details>
-<summary><b>ID Generation</b></summary>
-
-```rust
-use commons::id::{generate_id, generate_prefixed_id, IdFormat};
-
-let ts_id   = generate_id(IdFormat::Timestamp);  // 20-char sortable
-let hex_id  = generate_id(IdFormat::RandomHex);   // 32-char hex
-let short   = generate_id(IdFormat::Short);        // 12-char base62
-let user_id = generate_prefixed_id("usr");         // "usr_A1b2C3d4E5f6"
-```
-</details>
-
-<details>
-<summary><b>Validation</b></summary>
-
-```rust
-use commons::validation::*;
-
-assert!(is_valid_email("user@example.com"));
-assert!(is_valid_url("http://localhost:8080/api"));
-assert!(is_valid_semver("1.0.0-alpha.1"));
-assert!(is_valid_ip("::1"));
-assert!(is_identifier("snake_case_name"));
-```
-</details>
-
-<details>
-<summary><b>Cross-Platform Filesystem</b></summary>
-
-```rust
-use commons::fs::{resolve_path, to_wsl_path, from_wsl_path, ensure_dir, is_wsl};
-
-// Tilde expansion
-let path = resolve_path("~/.config/app.toml");
-
-// WSL path translation (bidirectional)
-let wsl  = to_wsl_path(r"C:\Users\Name\file.txt");   // /mnt/c/Users/Name/file.txt
-let win  = from_wsl_path("/mnt/c/Users/Name/file.txt"); // C:\Users\Name\file.txt
-
-// Create nested directories
-ensure_dir("~/.config/myapp/logs").unwrap();
-```
-</details>
-
-<details>
-<summary><b>Prelude (Import Everything)</b></summary>
-
-```rust
-use commons::prelude::*;
-
-// All public types from enabled features are now in scope
-let mut cache = LruCache::new(100);
-cache.insert("key", "value");
-```
-</details>
-
-## Reusable CI Workflows
-
-Commons ships reusable GitHub Actions workflows that downstream crates can call directly:
-
-```yaml
-# .github/workflows/ci.yml in your downstream crate
-jobs:
-  ci:
-    uses: sebastienrousseau/commons/.github/workflows/ci.yml@main
-
-  coverage:
-    uses: sebastienrousseau/commons/.github/workflows/coverage.yml@main
-    secrets: inherit
-
-  audit:
-    uses: sebastienrousseau/commons/.github/workflows/audit.yml@main
 ```
 
-## Safety & Compliance
+Runnable versions of each live in [`crates/commons/examples/`](crates/commons/examples).
 
-- **`#![deny(unsafe_code)]`** &mdash; No unsafe blocks anywhere in the crate
-- **MIRI-verified** &mdash; CI runs `cargo miri test` on every push
-- **Pedantic linting** &mdash; Survives `clippy::pedantic`, `clippy::nursery`, and `clippy::cargo`
-- **95%+ code coverage** &mdash; Cross-platform matrix (Linux, macOS, Windows)
+```sh
+cargo run --example identifiers --all-features
+cargo run --example validation  --all-features
+cargo run --example retry       --all-features
+```
 
-## Minimum Supported Rust Version
+## Modules
 
-This crate requires **Rust 1.88.0** or later (`edition = "2024"`).
+| Module | Feature | What it covers |
+|---|---|---|
+| `config` | `config` | Layered configuration loading |
+| `error` | `error` | Shared error type and result alias |
+| `logging` | `logging` | Lock-free engine, sinks, twelve wire formats |
+| `time` | `time` | Timestamps |
+| `collections` | `collections` | Collection helpers |
+| `validation` | `validation` | Emails, URLs, IPs, lengths, ranges |
+| `retry` | `retry` | Backoff strategies and retry policies |
+| `id` | `id` | Timestamp, hex, short and prefixed identifiers |
+| `env` | `env` | Typed environment variable access |
+| `fs` | `fs` | Filesystem helpers, WSL detection |
 
----
+## Features
 
-<p align="center">
-  THE ARCHITECT &#x16EB; <a href="https://sebastien.sh">Sebastien Rousseau</a><br/>
-  THE ENGINE &#x16DE; <a href="https://euxis.com">EUXIS</a> &#x16EB; Enterprise Unified Execution Intelligence System
-</p>
+Every module is feature gated, so depending on this crate for one
+utility does not drag in the rest.
 
-## License
+```
+full ─┬─ config ──── serde, toml
+      ├─ error ───── thiserror
+      ├─ logging ──┬─ time, error, serde, toml
+      │            └─ crossbeam-queue, dtt, parking_lot, serde_json,
+      │               log, tracing-core, hostname, regex, itoa, ryu
+      ├─ time · collections · validation · retry · id · env · fs
+      └─ (no dependencies)
 
-Licensed under the MIT License or Apache-2.0, at your option. See [LICENSE-MIT](LICENSE-MIT) or [LICENSE-APACHE](LICENSE-APACHE) for details.
+logging-tokio         ─ logging + tokio, notify
+logging-tui           ─ logging + terminal_size
+logging-miette        ─ logging + miette
+logging-tracing-layer ─ logging + tracing-subscriber
+```
 
-<p align="right"><a href="#euxis-commons">&#8593; Back to Top</a></p>
+`logging` is the only feature with a substantial dependency set. The
+seven utility modules pull nothing; `config` and `error` pull one
+well-known crate each.
+
+## Logging
+
+Records go onto a bounded lock-free ring buffer
+(`crossbeam_queue::ArrayQueue`) and are drained by a single background
+flusher thread. Formatting and I/O happen on the flusher, so an
+application thread pays only for building the event and a queue push.
+
+The queue is bounded on purpose: under sustained overload, pushes fail
+rather than growing memory without limit.
+
+Twelve wire formats are supported — CLF, JSON, CEF, ELF, GELF,
+ApacheAccessLog, Logstash, NDJSON, MCP, OTLP, Logfmt and ECS — and
+sinks cover stdout, rotating files, `journald` on Linux and `os_log`
+on macOS.
+
+See [`doc/ARCHITECTURE.md`](doc/ARCHITECTURE.md) for the data flow and
+the escaping rules that differ between formats.
+
+## Benchmarks
+
+```sh
+cargo bench --all-features --bench benchmarks
+```
+
+Measured on an Apple silicon laptop at a short sample size, so treat
+them as orders of magnitude rather than published figures:
+
+| Benchmark | Time |
+|---|---|
+| `validation/not_empty` | ~5.9 ns |
+| `validation/email` | ~98 ns |
+| `id/short` | ~134 ns |
+| `id/timestamp` | ~207 ns |
+| `log_format/logfmt` | ~1.06 µs |
+| `log_format/json` | ~1.48 µs |
+
+The logging *engine* is deliberately not benchmarked: it owns a
+background thread, so a microbenchmark would measure queue contention
+against the harness rather than anything a caller controls.
+
+Note that `cargo bench` on its own also runs the library's test
+harness, which rejects criterion's flags — pass `--bench benchmarks`.
+
+## Documentation
+
+- [`doc/ARCHITECTURE.md`](doc/ARCHITECTURE.md) — layout, feature graph, logging internals, platform matrix
+- [`doc/TESTING.md`](doc/TESTING.md) — test layers, coverage, cfg-gated branches
+- [`doc/MSRV-AND-DEPRECATION.md`](doc/MSRV-AND-DEPRECATION.md) — version floor and removal policy
+- [`doc/adr/`](doc/adr) — architecture decision records
+
+## Testing
+
+```sh
+cargo test --workspace --all-features
+cargo llvm-cov --all-features --workspace --summary-only
+```
+
+Coverage sits at roughly **97% region / 98% line**. The remainder is
+dominated by derive-generated regions, exhaustiveness match arms, and
+`cfg`-gated code that cannot execute on the host measuring it — the
+`Mutex` counter fallback is unreachable on any 64-bit machine. Chasing
+a literal 100% would mean deleting real portability code.
+
+Code behind a `cfg` never compiles on the host that excludes it, so
+check the other branches explicitly:
+
+```sh
+cargo clippy --target x86_64-unknown-linux-gnu --all-features -- -D warnings
+cargo check  --target powerpc-unknown-linux-gnu --all-features   # no 64-bit atomics
+```
+
+## Platform support
+
+| Surface | Linux | macOS | Windows |
+|---|---|---|---|
+| stdout / file sinks | yes | yes | yes |
+| `journald` sink | yes | — | — |
+| `os_log` sink | — | yes | — |
+| `fs::is_wsl` | reads `/proc/version` | const `false` | const `false` |
+
+The crate builds on targets without 64-bit atomics, such as
+`powerpc-unknown-linux-gnu`; see
+[ADR-0002](doc/adr/0002-portable-counters.md).
+
+## Minimum supported Rust version
+
+**1.88.0**, enforced by a dedicated CI job. Raising it happens in a
+minor release with a documented reason — see
+[`doc/MSRV-AND-DEPRECATION.md`](doc/MSRV-AND-DEPRECATION.md).
+
+## Licence
+
+Licensed under either of
+
+- Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE))
+- MIT licence ([LICENSE-MIT](LICENSE-MIT))
+
+at your option.
