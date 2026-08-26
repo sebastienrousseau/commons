@@ -30,8 +30,10 @@ coverage/
 criterion/
 flamegraph*.svg
 
-# Documentation build
-/doc/
+# Documentation build. `cargo doc` writes to target/doc, which is
+# already covered by /target/. The repository's own narrative
+# documentation lives in /doc/ and must be tracked -- ignoring it
+# silently dropped every file added there.
 
 # Test outputs
 test-output/
