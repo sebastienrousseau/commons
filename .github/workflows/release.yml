@@ -4,6 +4,18 @@ on:
   push:
     tags:
       - "v*"
+  # Lets an existing tag be re-released without deleting and re-pushing
+  # it. A GitHub Actions outage once left a tag-triggered run wedged --
+  # reported as queued, completed and running at the same time, and
+  # refusing both cancel and rerun -- with no way to retry short of
+  # moving the tag. Moving tags to work around infrastructure is how
+  # releases get published from the wrong commit.
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to release, e.g. v0.0.4"
+        required: true
+        type: string
 
 env:
   CARGO_TERM_COLOR: always
@@ -13,8 +25,16 @@ jobs:
     name: Validate Tag
     runs-on: ubuntu-latest
     steps:
+      # On a dispatch, github.ref is the branch the workflow was started
+      # from, not the tag. Checking out the tag explicitly means the
+      # version that is validated is the version that gets published.
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+
       - name: Check tag matches Cargo.toml version
+        env:
+          INPUT_TAG: ${{ inputs.tag }}
         run: |
           # Read the version from cargo itself rather than grepping a
           # manifest. The root Cargo.toml is a virtual workspace with no
@@ -22,7 +42,7 @@ jobs:
           # check compared the tag against "v".
           CARGO_VERSION="v$(cargo metadata --no-deps --format-version 1 \
             | jq -r '.packages[] | select(.name == "euxis-commons") | .version')"
-          TAG="${GITHUB_REF_NAME}"
+          TAG="${INPUT_TAG:-${GITHUB_REF_NAME}}"
           if [ "$CARGO_VERSION" != "$TAG" ]; then
             echo "::error::Tag ${TAG} does not match Cargo.toml version ${CARGO_VERSION}"
             exit 1
@@ -38,7 +58,11 @@ jobs:
       # Mints the OIDC token crates.io exchanges for a publish token.
       id-token: write
     steps:
+      # Same tag as validate. Without this a dispatch would package
+      # whatever is on the default branch under the tag's version.
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       # Trusted publishing: swaps this job's GitHub OIDC identity for a
