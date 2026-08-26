@@ -100,3 +100,30 @@ jobs:
         env:
           MIRIFLAGS: "-Zmiri-tree-borrows -Zmiri-disable-isolation -Zmiri-ignore-leaks"
         run: cargo miri test --workspace --all-features
+
+  # Every module is feature gated, and `--all-features` cannot catch a
+  # module that is compiled when its feature is off, or one whose
+  # feature forgets a dependency it derives from. Both bugs existed
+  # here and were invisible to the other jobs.
+  features:
+    name: Feature matrix
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Check individual feature combinations
+        run: |
+          set -euo pipefail
+          combos=(
+            ""
+            "config" "error" "logging" "time" "collections"
+            "validation" "retry" "id" "env" "fs"
+            "validation,retry" "id,fs" "config,logging"
+          )
+          for c in "${combos[@]}"; do
+            echo "::group::features: ${c:-<none>}"
+            cargo check -p euxis-commons --no-default-features ${c:+--features "$c"}
+            echo "::endgroup::"
+          done
+          cargo check -p euxis-commons --all-features
