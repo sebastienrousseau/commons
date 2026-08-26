@@ -85,6 +85,11 @@ tracing-subscriber = { version = "0.3", default-features = false, features = ["r
 [dev-dependencies]
 tempfile = "3.15"
 serial_test = "3"
+criterion = "0.8"
+
+[[bench]]
+name = "benchmarks"
+harness = false
 
 [package.metadata.docs.rs]
 # Build docs with all crate features enabled to cover the entire API.
