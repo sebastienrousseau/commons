@@ -43,11 +43,9 @@
 #![warn(clippy::all)]
 
 /// Portable monotonic counters for targets without 64-bit atomics.
-///
-/// Private implementation detail, gated on the features that use it so
-/// it is not dead code when they are all disabled.
-#[cfg(any(feature = "id", feature = "logging"))]
-mod counter;
+#[cfg(any(feature = "counter", feature = "id", feature = "logging"))]
+#[cfg_attr(docsrs, doc(cfg(feature = "counter")))]
+pub mod counter;
 
 #[cfg(feature = "config")]
 #[cfg_attr(docsrs, doc(cfg(feature = "config")))]
@@ -160,7 +158,12 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_version() {
-        assert_eq!(version(), "0.0.3");
+    fn version_matches_the_manifest() {
+        // Deliberately not a hardcoded literal. Pinning the version in a
+        // second place means every release breaks this test, and the
+        // "fix" is to edit the copy -- which tests nothing except that
+        // someone remembered to edit it.
+        assert_eq!(version(), env!("CARGO_PKG_VERSION"));
+        assert!(!version().is_empty());
     }
 }
