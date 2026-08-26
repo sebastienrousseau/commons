@@ -181,10 +181,15 @@ harness, which rejects criterion's flags — pass `--bench benchmarks`.
 
 ## Documentation
 
+- [`doc/USER-GUIDE.md`](doc/USER-GUIDE.md) — task-oriented tour of every module
 - [`doc/ARCHITECTURE.md`](doc/ARCHITECTURE.md) — layout, feature graph, logging internals, platform matrix
+- [`doc/POLICIES.md`](doc/POLICIES.md) — MSRV, SemVer, security, supply chain
 - [`doc/TESTING.md`](doc/TESTING.md) — test layers, coverage, cfg-gated branches
 - [`doc/MSRV-AND-DEPRECATION.md`](doc/MSRV-AND-DEPRECATION.md) — version floor and removal policy
 - [`doc/adr/`](doc/adr) — architecture decision records
+
+Project: [CONTRIBUTING](CONTRIBUTING.md) · [SECURITY](SECURITY.md) ·
+[SUPPORT](SUPPORT.md) · [CODE_OF_CONDUCT](CODE_OF_CONDUCT.md)
 
 ## Testing
 
