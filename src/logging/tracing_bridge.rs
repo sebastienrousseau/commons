@@ -9,7 +9,8 @@
 
 use super::log_entry::Log;
 use super::log_level::LogLevel;
-use std::sync::atomic::{AtomicU64, Ordering};
+use crate::counter::Counter;
+use std::sync::atomic::Ordering;
 use tracing_core::field::{Field, Visit};
 use tracing_core::{Event, Level, Metadata, Subscriber};
 
@@ -29,7 +30,7 @@ fn map_tracing_level(level: Level) -> LogLevel {
 }
 
 /// Monotonic span ID counter for unique span identification.
-static SPAN_ID_COUNTER: AtomicU64 = AtomicU64::new(1);
+static SPAN_ID_COUNTER: Counter = Counter::new(1);
 
 /// A `tracing::Subscriber` that routes events to the logging engine.
 #[derive(Debug, Default, Clone, Copy)]

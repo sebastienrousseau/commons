@@ -12,15 +12,16 @@
 //! println!("Generated ID: {}", id);
 //! ```
 
+use crate::counter::Counter;
 use std::fmt::Write;
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::atomic::Ordering;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 /// Counter for timestamp-based ID uniqueness within the same millisecond.
-static TIMESTAMP_COUNTER: AtomicU64 = AtomicU64::new(0);
+static TIMESTAMP_COUNTER: Counter = Counter::new(0);
 
 /// Counter for entropy seeding in random byte generation.
-static ENTROPY_COUNTER: AtomicU64 = AtomicU64::new(0);
+static ENTROPY_COUNTER: Counter = Counter::new(0);
 
 /// ID format options.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
