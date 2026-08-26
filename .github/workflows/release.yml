@@ -16,7 +16,12 @@ jobs:
       - uses: actions/checkout@v4
       - name: Check tag matches Cargo.toml version
         run: |
-          CARGO_VERSION="v$(grep '^version' Cargo.toml | head -1 | sed 's/.*"\(.*\)"/\1/')"
+          # Read the version from cargo itself rather than grepping a
+          # manifest. The root Cargo.toml is a virtual workspace with no
+          # version field, so grepping it yielded an empty string and the
+          # check compared the tag against "v".
+          CARGO_VERSION="v$(cargo metadata --no-deps --format-version 1 \
+            | jq -r '.packages[] | select(.name == "euxis-commons") | .version')"
           TAG="${GITHUB_REF_NAME}"
           if [ "$CARGO_VERSION" != "$TAG" ]; then
             echo "::error::Tag ${TAG} does not match Cargo.toml version ${CARGO_VERSION}"
