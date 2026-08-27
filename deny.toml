@@ -1,0 +1,52 @@
+# cargo-deny configuration. Run with `make deny`.
+
+[graph]
+all-features = true
+
+[advisories]
+# Any RustSec advisory at or above the default severity threshold fails
+# the build unless it is listed in `ignore` below. Nothing is ignored
+# today, and additions should carry a reason and a revisit condition.
+yanked = "warn"
+ignore = []
+
+[licenses]
+# Derived from the actual dependency graph under `--all-features`, not
+# copied from a sibling project. Every entry below is reachable today;
+# `cargo deny check licenses` fails on anything new, which is the point.
+allow = [
+    "MIT",
+    "Apache-2.0",
+    # `ring` and a few others carry the LLVM exception on Apache-2.0.
+    "Apache-2.0 WITH LLVM-exception",
+    # `is_ci` and the `untrusted`/`rustls-webpki` line are ISC.
+    "ISC",
+    # `memchr`, `byteorder` and `aho-corasick` are Unlicense OR MIT.
+    "Unlicense",
+    # Transitive BSD-licensed deps.
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    # `adler2` and some compression helpers.
+    "0BSD",
+    "Zlib",
+    # `tiny-keccak` and similar offer BSL-1.0 as an alternative.
+    "BSL-1.0",
+    # `notify`'s dependency chain includes CC0-1.0 crates.
+    "CC0-1.0",
+    # `icu_*` / `zerovec`, pulled in transitively by `idna`.
+    "Unicode-3.0",
+]
+# One crate offers LGPL-2.1-or-later as a third alternative alongside
+# MIT and Apache-2.0. Because the expression is a disjunction we take a
+# permissive arm, so the copyleft option never applies — but it is not
+# in `allow`, which keeps that explicit.
+confidence-threshold = 0.93
+
+[bans]
+multiple-versions = "warn"
+wildcards = "deny"
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]
