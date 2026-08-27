@@ -67,7 +67,7 @@ toml = { version = "0.8", optional = true }
 
 # Logging: core engine
 crossbeam-queue = { version = "0.3.12", optional = true }
-dtt = { version = "0.0.9", optional = true }
+dtt = { version = "0.0.11", optional = true }
 parking_lot = { version = "0.12.5", optional = true }
 serde_json = { version = "1.0", optional = true }
 log = { version = "0.4.29", optional = true }
