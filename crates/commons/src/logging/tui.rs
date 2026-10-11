@@ -48,7 +48,7 @@ fn get_terminal_height() -> u16 {
 }
 
 #[cfg(not(feature = "logging-tui"))]
-fn get_terminal_height() -> u16 {
+const fn get_terminal_height() -> u16 {
     DEFAULT_TERMINAL_HEIGHT
 }
 
@@ -231,7 +231,7 @@ fn get_terminal_width() -> u16 {
 
 /// Returns the default terminal width when the `logging-tui` feature is disabled.
 #[cfg(not(feature = "logging-tui"))]
-fn get_terminal_width() -> u16 {
+const fn get_terminal_width() -> u16 {
     DEFAULT_TERMINAL_WIDTH
 }
 
