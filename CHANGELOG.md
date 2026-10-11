@@ -9,7 +9,11 @@ Note that under SemVer, every `0.0.x` release is its own compatibility
 range: `0.0.4` is not a drop-in for `0.0.3`. See
 [MSRV-AND-DEPRECATION.md](doc/MSRV-AND-DEPRECATION.md).
 
-## [Unreleased]
+## [v0.0.5] - 2026-10-11
+
+### Fixed
+
+- Made `get_terminal_height` and `get_terminal_width` `const fn` when `logging-tui` is disabled, satisfying `clippy::missing_const_for_fn`.
 
 ### Added
 
@@ -32,7 +36,7 @@ range: `0.0.4` is not a drop-in for `0.0.3`. See
 
 - **`Counter` is now public** (#7). The portable monotonic counter added
   in 0.0.3 was reachable only from inside the crate, so the downstream
-  that needed it — `rlg` — could not use the fix it was written for.
+  that needed it - `rlg` - could not use the fix it was written for.
 
 ## [v0.0.3] - 2026-08-26
 
@@ -77,7 +81,8 @@ range: `0.0.4` is not a drop-in for `0.0.3`. See
 
 Initial release.
 
-[Unreleased]: https://github.com/sebastienrousseau/commons/compare/v0.0.4...HEAD
+[Unreleased]: https://github.com/sebastienrousseau/commons/compare/v0.0.5...HEAD
+[v0.0.5]: https://github.com/sebastienrousseau/commons/compare/v0.0.4...v0.0.5
 [v0.0.4]: https://github.com/sebastienrousseau/commons/compare/v0.0.3...v0.0.4
 [v0.0.3]: https://github.com/sebastienrousseau/commons/compare/v0.0.2...v0.0.3
 [v0.0.2]: https://github.com/sebastienrousseau/commons/compare/v0.0.1...v0.0.2
