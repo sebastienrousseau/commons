@@ -17,7 +17,7 @@ What this crate promises, and what it does not.
 
 ## 1. MSRV
 
-**1.88.0**, declared as `rust-version` and enforced by a dedicated CI
+**1.89.0**, declared as `rust-version` and enforced by a dedicated CI
 job so it cannot drift unnoticed.
 
 Raising it is deliberate: it happens in a minor release, the notes say

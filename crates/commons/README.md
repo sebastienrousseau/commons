@@ -227,7 +227,7 @@ The crate builds on targets without 64-bit atomics, such as
 
 ## Minimum supported Rust version
 
-**1.88.0**, enforced by a dedicated CI job. Raising it happens in a
+**1.89.0**, enforced by a dedicated CI job. Raising it happens in a
 minor release with a documented reason — see
 [`doc/MSRV-AND-DEPRECATION.md`](doc/MSRV-AND-DEPRECATION.md).
 
