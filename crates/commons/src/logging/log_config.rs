@@ -1302,7 +1302,7 @@ type = "Stdout"
         match result {
             Ok(cfg) => {
                 // Verify it's a valid LoggingConfig
-                assert!(!cfg.version.is_empty());
+                assert_ne!(cfg.version, "");
             }
             Err(e) => {
                 let display = e.to_string();

@@ -244,7 +244,7 @@ mod tests {
     #[test]
     fn test_generate_timestamp_non_empty() {
         let ts = generate_timestamp();
-        assert!(!ts.is_empty());
+        assert_ne!(ts, "");
     }
 
     #[test]
@@ -294,7 +294,7 @@ mod tests {
     #[test]
     fn test_sanitize_empty_string() {
         let result = sanitize_log_message("");
-        assert!(result.is_empty());
+        assert_eq!(result, "");
     }
 
     // ---- format_file_size ----

@@ -474,7 +474,7 @@ mod tests {
         let mut visitor = LoggingVisitor::default();
         let field = FS_V2.field("custom").unwrap();
         visitor.record_debug(&field, &42_i32);
-        assert!(visitor.message.is_empty());
+        assert_eq!(visitor.message, "");
         assert!(visitor.fields.contains_key("custom"));
     }
 
@@ -492,7 +492,7 @@ mod tests {
         let mut visitor = LoggingVisitor::default();
         let field = FS_V4.field("extra").unwrap();
         visitor.record_str(&field, "extra_value");
-        assert!(visitor.message.is_empty());
+        assert_eq!(visitor.message, "");
         assert_eq!(
             visitor.fields.get("extra").unwrap(),
             &serde_json::json!("extra_value")
