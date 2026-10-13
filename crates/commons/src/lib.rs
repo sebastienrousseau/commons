@@ -164,6 +164,6 @@ mod tests {
         // "fix" is to edit the copy -- which tests nothing except that
         // someone remembered to edit it.
         assert_eq!(version(), env!("CARGO_PKG_VERSION"));
-        assert!(!version().is_empty());
+        assert_ne!(version(), "");
     }
 }

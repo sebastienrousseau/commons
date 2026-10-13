@@ -313,7 +313,7 @@ mod tests {
     #[test]
     fn test_get_list_missing() {
         let list = get_list("NONEXISTENT_LIST_VAR", ",");
-        assert!(list.is_empty());
+        assert_eq!(list, Vec::<String>::new());
     }
 
     #[test]
@@ -332,7 +332,7 @@ mod tests {
     fn test_get_environment_default() {
         // Without any ENV vars set, should return "development"
         let env = get_environment();
-        assert!(!env.is_empty());
+        assert_ne!(env, "");
     }
 
     #[test]
