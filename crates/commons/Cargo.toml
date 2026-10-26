@@ -15,7 +15,7 @@ license = "MIT OR Apache-2.0"
 name = "euxis-commons"
 readme = "README.md"
 repository = "https://github.com/sebastienrousseau/commons"
-rust-version = "1.88.0"
+rust-version = "1.89.0"
 version = "0.0.5"
 include = [
     "/LICENSE-APACHE",

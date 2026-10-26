@@ -5,7 +5,7 @@
 
 ## Minimum supported Rust version
 
-The MSRV is **1.88.0**, declared as `rust-version` in the crate
+The MSRV is **1.89.0**, declared as `rust-version` in the crate
 manifest and enforced by a dedicated CI job so it cannot drift
 unnoticed.
 

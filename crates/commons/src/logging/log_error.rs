@@ -198,7 +198,7 @@ mod tests {
             LoggingError::NativeSinkError("ns".into()),
         ];
         for err in &variants {
-            assert!(!format!("{err:?}").is_empty());
+            assert_ne!(format!("{err:?}"), "");
         }
     }
 

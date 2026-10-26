@@ -501,7 +501,7 @@ mod tests {
         assert_eq!(log.time, "");
         assert_eq!(log.level, LogLevel::INFO);
         assert_eq!(log.component, "");
-        assert!(log.description.is_empty());
+        assert_eq!(log.description, "");
         assert_eq!(log.format, LogFormat::CLF);
         assert!(log.attributes.is_empty());
     }
