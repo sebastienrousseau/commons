@@ -61,7 +61,7 @@ features:
 	done
 
 msrv:
-	cargo +1.88.0 check --all-features
+	cargo +1.89.0 check --all-features
 
 clean:
 	cargo clean

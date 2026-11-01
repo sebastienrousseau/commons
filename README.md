@@ -47,7 +47,7 @@
 
 ```toml
 [dependencies]
-euxis-commons = "0.0.3"
+euxis-commons = "0.0.6"
 ```
 
 The default feature set (`full`) enables every module. Most consumers
@@ -55,7 +55,7 @@ want less:
 
 ```toml
 # Just validation and retries — no logging stack, no serde.
-euxis-commons = { version = "0.0.3", default-features = false, features = ["validation", "retry"] }
+euxis-commons = { version = "0.0.6", default-features = false, features = ["validation", "retry"] }
 ```
 
 The library is imported as `commons`:
@@ -227,7 +227,7 @@ The crate builds on targets without 64-bit atomics, such as
 
 ## Minimum supported Rust version
 
-**1.88.0**, enforced by a dedicated CI job. Raising it happens in a
+**1.89.0**, enforced by a dedicated CI job. Raising it happens in a
 minor release with a documented reason — see
 [`doc/MSRV-AND-DEPRECATION.md`](doc/MSRV-AND-DEPRECATION.md).
 

@@ -30,3 +30,15 @@ jobs:
           publish_dir: ./target/doc
           commit_message: "docs: deploy documentation [skip ci]"
           cname: commons.euxis.co
+
+  # Deploys the gh-pages branch just published, with GitHub Actions
+  # (see pages.yml).
+  pages:
+    name: Deploy Pages
+    needs: doc
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    uses: ./.github/workflows/pages.yml

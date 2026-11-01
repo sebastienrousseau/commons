@@ -9,6 +9,22 @@ Note that under SemVer, every `0.0.x` release is its own compatibility
 range: `0.0.4` is not a drop-in for `0.0.3`. See
 [MSRV-AND-DEPRECATION.md](doc/MSRV-AND-DEPRECATION.md).
 
+## [v0.0.6] - 2026-11-01
+
+### Changed
+
+- **The MSRV is now Rust 1.89.0** (was 1.88.0). No language feature
+  needs it: 1.89.0 is the floor shared by the maintainer's Rust crates,
+  released more than six months before this version as the policy
+  requires. `rust-version`, the `msrv` CI job, `make msrv`, the READMEs
+  and the policy documents move together.
+
+### Fixed
+
+- Lint on current stable is green again: ten `assert!(x.is_empty())`
+  checks in unit tests became `assert_eq!`/`assert_ne!`, which the
+  newer clippy asks for.
+
 ## [v0.0.5] - 2026-10-11
 
 ### Fixed
@@ -81,7 +97,8 @@ range: `0.0.4` is not a drop-in for `0.0.3`. See
 
 Initial release.
 
-[Unreleased]: https://github.com/sebastienrousseau/commons/compare/v0.0.5...HEAD
+[Unreleased]: https://github.com/sebastienrousseau/commons/compare/v0.0.6...HEAD
+[v0.0.6]: https://github.com/sebastienrousseau/commons/compare/v0.0.5...v0.0.6
 [v0.0.5]: https://github.com/sebastienrousseau/commons/compare/v0.0.4...v0.0.5
 [v0.0.4]: https://github.com/sebastienrousseau/commons/compare/v0.0.3...v0.0.4
 [v0.0.3]: https://github.com/sebastienrousseau/commons/compare/v0.0.2...v0.0.3
