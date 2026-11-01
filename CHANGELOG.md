@@ -9,7 +9,7 @@ Note that under SemVer, every `0.0.x` release is its own compatibility
 range: `0.0.4` is not a drop-in for `0.0.3`. See
 [MSRV-AND-DEPRECATION.md](doc/MSRV-AND-DEPRECATION.md).
 
-## [v0.0.6] - Unreleased
+## [v0.0.6] - 2026-11-01
 
 ### Changed
 
@@ -97,7 +97,8 @@ range: `0.0.4` is not a drop-in for `0.0.3`. See
 
 Initial release.
 
-[Unreleased]: https://github.com/sebastienrousseau/commons/compare/v0.0.5...HEAD
+[Unreleased]: https://github.com/sebastienrousseau/commons/compare/v0.0.6...HEAD
+[v0.0.6]: https://github.com/sebastienrousseau/commons/compare/v0.0.5...v0.0.6
 [v0.0.5]: https://github.com/sebastienrousseau/commons/compare/v0.0.4...v0.0.5
 [v0.0.4]: https://github.com/sebastienrousseau/commons/compare/v0.0.3...v0.0.4
 [v0.0.3]: https://github.com/sebastienrousseau/commons/compare/v0.0.2...v0.0.3
