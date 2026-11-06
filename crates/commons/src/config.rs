@@ -38,6 +38,11 @@ pub struct Config {
 impl Config {
     /// Create a new configuration from TOML string content.
     ///
+    /// Invalid TOML gives an empty configuration: every [`get`](Config::get)
+    /// returns `None`. To have the error reported instead, load with
+    /// [`from_file`](Config::from_file) or deserialize with
+    /// [`parse`](Config::parse).
+    ///
     /// # Arguments
     ///
     /// * `content` - TOML formatted configuration string
@@ -70,7 +75,8 @@ impl Config {
     ///
     /// # Errors
     ///
-    /// Returns an error if the file cannot be read.
+    /// Returns [`ConfigError::FileRead`] if the file cannot be read, and
+    /// [`ConfigError::Parse`] if it is not valid TOML.
     ///
     /// # Example
     ///
@@ -80,10 +86,11 @@ impl Config {
     /// let config = Config::from_file("config.toml").unwrap();
     /// ```
     pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self, ConfigError> {
-        let content = std::fs::read_to_string(path.as_ref())
-            .map_err(|e| ConfigError::FileRead(format!("{}: {}", path.as_ref().display(), e)))?;
-        let parsed =
-            toml::from_str(&content).unwrap_or_else(|_| toml::Value::Table(toml::map::Map::new()));
+        let path = path.as_ref();
+        let content = std::fs::read_to_string(path)
+            .map_err(|e| ConfigError::FileRead(format!("{}: {}", path.display(), e)))?;
+        let parsed = toml::from_str(&content)
+            .map_err(|e| ConfigError::Parse(format!("{}: {}", path.display(), e)))?;
         Ok(Self { content, parsed })
     }
 
@@ -408,6 +415,16 @@ mod tests {
         // Should still work — has_key returns false, get returns None
         assert!(!config.has_key("anything"));
         assert_eq!(config.get::<String>("anything"), None);
+    }
+
+    #[test]
+    fn from_file_reports_malformed_toml() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("bad.toml");
+        std::fs::write(&path, "name = \"unterminated\nport = 8080\n").unwrap();
+        let err = Config::from_file(&path).unwrap_err();
+        assert!(matches!(err, ConfigError::Parse(_)), "{err:?}");
+        assert!(err.to_string().contains("bad.toml"), "{err}");
     }
 
     #[test]
