@@ -6,6 +6,8 @@
 //! than reaching into private helpers, so they double as executable
 //! documentation of what each `LogFormat` emits.
 
+// Exercises API deprecated in 0.0.8 until it is removed.
+#![allow(deprecated)]
 #![cfg(feature = "logging")]
 
 use commons::logging::{Log, LogFormat};

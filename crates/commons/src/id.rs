@@ -12,6 +12,11 @@
 //! println!("Generated ID: {}", id);
 //! ```
 
+// the deprecated ID generators are deprecated in 0.0.8 and refer to one another here
+// (impls, constructors, tests). The deprecation is for callers outside
+// this module; it is removed together with them.
+#![allow(deprecated)]
+
 use crate::counter::Counter;
 use std::fmt::Write;
 use std::sync::atomic::Ordering;
@@ -22,6 +27,10 @@ static TIMESTAMP_COUNTER: Counter = Counter::new(0);
 
 /// ID format options.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[deprecated(
+    since = "0.0.8",
+    note = "no known user; use the uuid crate (v4 or v7); generate_random_hex stays"
+)]
 pub enum IdFormat {
     /// Timestamp-based ID (sortable, 20 chars).
     Timestamp,
@@ -43,6 +52,10 @@ pub enum IdFormat {
 ///
 /// A unique string ID.
 #[must_use]
+#[deprecated(
+    since = "0.0.8",
+    note = "no known user; use the uuid crate (v4 or v7); generate_random_hex stays"
+)]
 pub fn generate_id(format: IdFormat) -> String {
     match format {
         IdFormat::RandomHex => generate_random_hex(),
@@ -61,6 +74,10 @@ pub fn generate_id(format: IdFormat) -> String {
 ///
 /// A prefixed unique ID like `usr_abc123`.
 #[must_use]
+#[deprecated(
+    since = "0.0.8",
+    note = "no known user; use the uuid crate (v4 or v7); generate_random_hex stays"
+)]
 pub fn generate_prefixed_id(prefix: &str) -> String {
     format!("{prefix}_{}", generate_short_id())
 }
@@ -70,6 +87,10 @@ pub fn generate_prefixed_id(prefix: &str) -> String {
 /// Format: 13 digits timestamp + 7 digits counter = 20 chars
 /// IDs generated in the same millisecond are still unique and sortable.
 #[must_use]
+#[deprecated(
+    since = "0.0.8",
+    note = "no known user; use the uuid crate (v4 or v7); generate_random_hex stays"
+)]
 pub fn generate_timestamp_id() -> String {
     let timestamp = current_timestamp_millis();
     let counter = TIMESTAMP_COUNTER.fetch_add(1, Ordering::SeqCst) % 10_000_000;
@@ -104,6 +125,10 @@ pub fn generate_random_hex() -> String {
 ///
 /// Panics if the operating system's random number generator fails.
 #[must_use]
+#[deprecated(
+    since = "0.0.8",
+    note = "no known user; use the uuid crate (v4 or v7); generate_random_hex stays"
+)]
 pub fn generate_short_id() -> String {
     const CHARS: &[u8] = b"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
     // 248 = 4 * 62: bytes at or above it would favour the first characters.
@@ -131,6 +156,10 @@ pub fn generate_short_id() -> String {
 ///
 /// Panics if the operating system's random number generator fails.
 #[must_use]
+#[deprecated(
+    since = "0.0.8",
+    note = "no known user; use the uuid crate (v4 or v7); generate_random_hex stays"
+)]
 pub fn generate_uuid_like() -> String {
     let mut bytes = [0u8; 16];
     fill_random_bytes(&mut bytes);
@@ -163,6 +192,10 @@ pub fn generate_uuid_like() -> String {
 /// Get current timestamp in milliseconds.
 #[must_use]
 #[allow(clippy::cast_possible_truncation)]
+#[deprecated(
+    since = "0.0.8",
+    note = "no known user; use the uuid crate (v4 or v7); generate_random_hex stays"
+)]
 pub fn current_timestamp_millis() -> u64 {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -182,6 +215,10 @@ fn fill_random_bytes(bytes: &mut [u8]) {
 
 /// ID generator with configuration.
 #[derive(Debug, Clone)]
+#[deprecated(
+    since = "0.0.8",
+    note = "no known user; use the uuid crate (v4 or v7); generate_random_hex stays"
+)]
 pub struct IdGenerator {
     prefix: Option<String>,
     format: IdFormat,

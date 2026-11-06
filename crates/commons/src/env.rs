@@ -17,6 +17,10 @@
 //! // let api_key: String = require_env("API_KEY");
 //! ```
 
+// This module is deprecated in 0.0.8; its own code and tests use its
+// items. The warning is for callers; it goes when the module is removed.
+#![allow(deprecated)]
+
 use std::env;
 use std::str::FromStr;
 

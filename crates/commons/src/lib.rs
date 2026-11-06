@@ -40,6 +40,10 @@
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![deny(missing_docs)]
 #![deny(unsafe_code)]
+// libtest's generated harness refers to every #[test] in the modules
+// deprecated in 0.0.8 from outside them, which a module-level allow cannot
+// reach. Applies only to this crate's own unit-test build.
+#![cfg_attr(test, allow(deprecated))]
 #![warn(clippy::all)]
 
 /// Portable monotonic counters for targets without 64-bit atomics.
@@ -57,14 +61,26 @@ pub mod error;
 
 #[cfg(feature = "logging")]
 #[cfg_attr(docsrs, doc(cfg(feature = "logging")))]
+#[deprecated(
+    since = "0.0.8",
+    note = "use the rlg crate, which carries the same engine with the fixes this copy lacks; commons::logging will be removed"
+)]
 pub mod logging;
 
 #[cfg(feature = "time")]
 #[cfg_attr(docsrs, doc(cfg(feature = "time")))]
+#[deprecated(
+    since = "0.0.8",
+    note = "no known user; use std::time, or the time / humantime crates; commons::time will be removed"
+)]
 pub mod time;
 
 #[cfg(feature = "collections")]
 #[cfg_attr(docsrs, doc(cfg(feature = "collections")))]
+#[deprecated(
+    since = "0.0.8",
+    note = "no known user; use the lru or quick_cache crate; commons::collections will be removed"
+)]
 pub mod collections;
 
 #[cfg(feature = "validation")]
@@ -73,6 +89,10 @@ pub mod validation;
 
 #[cfg(feature = "retry")]
 #[cfg_attr(docsrs, doc(cfg(feature = "retry")))]
+#[deprecated(
+    since = "0.0.8",
+    note = "no known user; use the backon or backoff crate; commons::retry will be removed"
+)]
 pub mod retry;
 
 #[cfg(feature = "id")]
@@ -81,10 +101,18 @@ pub mod id;
 
 #[cfg(feature = "env")]
 #[cfg_attr(docsrs, doc(cfg(feature = "env")))]
+#[deprecated(
+    since = "0.0.8",
+    note = "no known user; use std::env, or the envy crate for typed configuration; commons::env will be removed"
+)]
 pub mod env;
 
 #[cfg(feature = "fs")]
 #[cfg_attr(docsrs, doc(cfg(feature = "fs")))]
+#[deprecated(
+    since = "0.0.8",
+    note = "no known user; use std::fs and the dirs crate; commons::fs will be removed"
+)]
 pub mod fs;
 
 /// Create a logger for the current module.
@@ -107,6 +135,9 @@ macro_rules! logger {
 /// ```rust
 /// use commons::prelude::*;
 /// ```
+// The prelude re-exports items deprecated in 0.0.8 so existing imports keep
+// compiling; callers still get the deprecation warning when they use them.
+#[allow(deprecated)]
 pub mod prelude {
     #[cfg(feature = "error")]
     pub use crate::error::{CommonError, CommonResult};

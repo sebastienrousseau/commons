@@ -12,6 +12,10 @@
 //! assert!(validate_length("hello", 1, 10).is_ok());
 //! ```
 
+// Most validators are deprecated in 0.0.8; the tests below still cover
+// them. The warning is for callers; it goes when they are removed.
+#![allow(deprecated)]
+
 use std::net::IpAddr;
 
 /// Validation error types.
@@ -86,6 +90,10 @@ pub fn validate_not_empty(value: &str) -> ValidationResult<&str> {
 /// # Errors
 ///
 /// Returns `ValidationError::TooShort` or `ValidationError::TooLong` if out of range.
+#[deprecated(
+    since = "0.0.8",
+    note = "no known user; use the url, email_address or semver crate, or std::net for IPs; Validator and validate_not_empty stay"
+)]
 pub const fn validate_length(value: &str, min: usize, max: usize) -> ValidationResult<&str> {
     let len = value.len();
     if len < min {
@@ -102,6 +110,10 @@ pub const fn validate_length(value: &str, min: usize, max: usize) -> ValidationR
 /// # Errors
 ///
 /// Returns `ValidationError::BelowMin` or `ValidationError::AboveMax` if out of range.
+#[deprecated(
+    since = "0.0.8",
+    note = "no known user; use the url, email_address or semver crate, or std::net for IPs; Validator and validate_not_empty stay"
+)]
 pub fn validate_range<T>(value: T, min: T, max: T) -> ValidationResult<T>
 where
     T: PartialOrd + std::fmt::Display + Copy,
@@ -125,6 +137,10 @@ where
 ///
 /// This is a simple check, not RFC 5322 compliant.
 #[must_use]
+#[deprecated(
+    since = "0.0.8",
+    note = "no known user; use the url, email_address or semver crate, or std::net for IPs; Validator and validate_not_empty stay"
+)]
 pub fn is_valid_email(email: &str) -> bool {
     let email = email.trim();
 
@@ -165,6 +181,10 @@ pub fn is_valid_email(email: &str) -> bool {
 /// a meaningful host. For full RFC 3986 compliance, use the
 /// [`url`](https://crates.io/crates/url) crate.
 #[must_use]
+#[deprecated(
+    since = "0.0.8",
+    note = "no known user; use the url, email_address or semver crate, or std::net for IPs; Validator and validate_not_empty stay"
+)]
 pub fn is_valid_url(url: &str) -> bool {
     let url = url.trim();
 
@@ -214,30 +234,50 @@ pub fn is_valid_url(url: &str) -> bool {
 
 /// Check if a string is a valid IP address (v4 or v6).
 #[must_use]
+#[deprecated(
+    since = "0.0.8",
+    note = "no known user; use the url, email_address or semver crate, or std::net for IPs; Validator and validate_not_empty stay"
+)]
 pub fn is_valid_ip(ip: &str) -> bool {
     ip.trim().parse::<IpAddr>().is_ok()
 }
 
 /// Check if a string is a valid IPv4 address.
 #[must_use]
+#[deprecated(
+    since = "0.0.8",
+    note = "no known user; use the url, email_address or semver crate, or std::net for IPs; Validator and validate_not_empty stay"
+)]
 pub fn is_valid_ipv4(ip: &str) -> bool {
     ip.trim().parse::<std::net::Ipv4Addr>().is_ok()
 }
 
 /// Check if a string is a valid IPv6 address.
 #[must_use]
+#[deprecated(
+    since = "0.0.8",
+    note = "no known user; use the url, email_address or semver crate, or std::net for IPs; Validator and validate_not_empty stay"
+)]
 pub fn is_valid_ipv6(ip: &str) -> bool {
     ip.trim().parse::<std::net::Ipv6Addr>().is_ok()
 }
 
 /// Check if a string contains only alphanumeric characters.
 #[must_use]
+#[deprecated(
+    since = "0.0.8",
+    note = "no known user; use the url, email_address or semver crate, or std::net for IPs; Validator and validate_not_empty stay"
+)]
 pub fn is_alphanumeric(s: &str) -> bool {
     !s.is_empty() && s.chars().all(char::is_alphanumeric)
 }
 
 /// Check if a string contains only ASCII alphanumeric characters and underscores.
 #[must_use]
+#[deprecated(
+    since = "0.0.8",
+    note = "no known user; use the url, email_address or semver crate, or std::net for IPs; Validator and validate_not_empty stay"
+)]
 pub fn is_identifier(s: &str) -> bool {
     if s.is_empty() {
         return false;
@@ -261,6 +301,10 @@ pub fn is_identifier(s: &str) -> bool {
 /// build metadata (`+build.42`). The three core version components
 /// (major, minor, patch) must be non-negative integers.
 #[must_use]
+#[deprecated(
+    since = "0.0.8",
+    note = "no known user; use the url, email_address or semver crate, or std::net for IPs; Validator and validate_not_empty stay"
+)]
 pub fn is_valid_semver(version: &str) -> bool {
     let version = version.trim().strip_prefix('v').unwrap_or(version);
 
@@ -281,6 +325,10 @@ pub fn is_valid_semver(version: &str) -> bool {
 /// # Errors
 ///
 /// Returns `ValidationError::NotInSet` if the value is not in the allowed set.
+#[deprecated(
+    since = "0.0.8",
+    note = "no known user; use the url, email_address or semver crate, or std::net for IPs; Validator and validate_not_empty stay"
+)]
 pub fn validate_in_set<T>(value: &T, allowed: &[T]) -> ValidationResult<()>
 where
     T: PartialEq + std::fmt::Display,

@@ -1,5 +1,9 @@
 //! Time handling and duration utilities.
 
+// This module is deprecated in 0.0.8; its own code and tests use its
+// items. The warning is for callers; it goes when the module is removed.
+#![allow(deprecated)]
+
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 /// Get the current Unix timestamp in seconds

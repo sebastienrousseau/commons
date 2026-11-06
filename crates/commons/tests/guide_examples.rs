@@ -10,6 +10,8 @@
 //!
 //! When the guide changes, change this alongside it.
 
+// Exercises API deprecated in 0.0.8 until it is removed.
+#![allow(deprecated)]
 #![allow(unused_variables, unused_imports, dead_code)]
 
 use commons::collections::LruCache;

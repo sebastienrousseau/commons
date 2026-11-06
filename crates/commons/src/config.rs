@@ -19,6 +19,11 @@
 //! let app_config: AppConfig = config.parse().unwrap();
 //! ```
 
+// Config, ConfigBuilder and FromTomlValue are deprecated in 0.0.8 and refer to one another here
+// (impls, constructors, tests). The deprecation is for callers outside
+// this module; it is removed together with them.
+#![allow(deprecated)]
+
 use serde::de::DeserializeOwned;
 use std::path::Path;
 
@@ -28,6 +33,10 @@ use std::path::Path;
 /// so repeated calls to [`get`](Config::get) and [`has_key`](Config::has_key)
 /// are cheap lookups rather than full re-parses.
 #[derive(Debug, Clone)]
+#[deprecated(
+    since = "0.0.8",
+    note = "no known user; deserialize with serde and toml directly; ConfigError stays"
+)]
 pub struct Config {
     /// Raw TOML content.
     content: String,
@@ -176,6 +185,10 @@ pub enum ConfigError {
 }
 
 /// Trait for converting TOML values to Rust types.
+#[deprecated(
+    since = "0.0.8",
+    note = "no known user; deserialize with serde and toml directly; ConfigError stays"
+)]
 pub trait FromTomlValue: Sized {
     /// Convert from a TOML value.
     fn from_toml_value(value: &toml::Value) -> Option<Self>;
@@ -221,6 +234,10 @@ impl<T: FromTomlValue> FromTomlValue for Vec<T> {
 
 /// Builder for creating configurations programmatically.
 #[derive(Debug, Default)]
+#[deprecated(
+    since = "0.0.8",
+    note = "no known user; deserialize with serde and toml directly; ConfigError stays"
+)]
 pub struct ConfigBuilder {
     values: toml::map::Map<String, toml::Value>,
 }

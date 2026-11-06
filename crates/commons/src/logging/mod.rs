@@ -4,6 +4,10 @@
 
 //! Near-lock-free structured logging engine.
 
+// This module is deprecated in 0.0.8; its own code and tests use its
+// items. The warning is for callers; it goes when the module is removed.
+#![allow(deprecated)]
+
 /// Near-lock-free ingestion engine backed by a bounded ring buffer.
 pub mod engine;
 /// One-call initialization for the logging engine.

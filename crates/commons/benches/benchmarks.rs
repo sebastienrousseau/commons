@@ -13,6 +13,9 @@
 //! would measure queue contention against the harness rather than
 //! anything a caller controls.
 
+// Exercises API deprecated in 0.0.8 until it is removed.
+#![allow(deprecated)]
+
 use commons::id::{generate_short_id, generate_timestamp_id};
 use commons::logging::{Log, LogFormat};
 use commons::validation::{is_valid_email, is_valid_url, validate_not_empty};
