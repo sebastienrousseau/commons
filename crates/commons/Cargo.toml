@@ -16,7 +16,7 @@ name = "euxis-commons"
 readme = "README.md"
 repository = "https://github.com/sebastienrousseau/commons"
 rust-version = "1.89.0"
-version = "0.0.6"
+version = "0.0.7"
 include = [
     "/LICENSE-APACHE",
     "/LICENSE-MIT",
@@ -63,7 +63,7 @@ fs = []
 # Existing
 thiserror = { version = "2.0", optional = true }
 serde = { version = "1.0", features = ["derive"], optional = true }
-toml = { version = "0.8", optional = true }
+toml = { version = "1.0", optional = true }
 
 # Logging: core engine
 crossbeam-queue = { version = "0.3.12", optional = true }
@@ -80,7 +80,7 @@ config_crate = { package = "config", version = "0.15", optional = true }
 envy = { version = "0.4.2", optional = true }
 
 # Logging: optional sub-features
-tokio = { version = "1.50.0", features = ["full"], optional = true }
+tokio = { version = "1.53.3", features = ["full"], optional = true }
 notify = { version = "8.2.0", optional = true }
 terminal_size = { version = "0.4", optional = true }
 miette = { version = "7.5.0", features = ["fancy"], optional = true }

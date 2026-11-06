@@ -9,6 +9,30 @@ Note that under SemVer, every `0.0.x` release is its own compatibility
 range: `0.0.4` is not a drop-in for `0.0.3`. See
 [MSRV-AND-DEPRECATION.md](doc/MSRV-AND-DEPRECATION.md).
 
+## [v0.0.7] - 2026-11-06
+
+### Changed
+
+- **`toml` is now 1.0** (was 0.8). `toml::Value` is part of the
+  `config` API, so code that names it must use `toml` 1.x too. Builds
+  with `config` or `logging` no longer compile two copies of `toml`,
+  `serde_spanned`, `toml_datetime` and `winnow`, since `config` 0.15
+  was already on `toml` 1.x.
+
+### Security
+
+- **`tokio` 1.53.3 or later is required** (was 1.50.0) under
+  `logging-tokio`, so no version affected by RUSTSEC-2026-0386 can
+  resolve. commons never constructs an `AsyncFd`.
+
+### Fixed
+
+- Four broken intra-doc links in the `logging` module docs now
+  resolve on stable and nightly rustdoc.
+- Every workflow job runs with a `contents: read` token, clearing ten
+  CodeQL `actions/missing-workflow-permissions` alerts, and a test no
+  longer formats session ids into its assert message.
+
 ## [v0.0.6] - 2026-11-01
 
 ### Changed
@@ -97,7 +121,8 @@ range: `0.0.4` is not a drop-in for `0.0.3`. See
 
 Initial release.
 
-[Unreleased]: https://github.com/sebastienrousseau/commons/compare/v0.0.6...HEAD
+[Unreleased]: https://github.com/sebastienrousseau/commons/compare/v0.0.7...HEAD
+[v0.0.7]: https://github.com/sebastienrousseau/commons/compare/v0.0.6...v0.0.7
 [v0.0.6]: https://github.com/sebastienrousseau/commons/compare/v0.0.5...v0.0.6
 [v0.0.5]: https://github.com/sebastienrousseau/commons/compare/v0.0.4...v0.0.5
 [v0.0.4]: https://github.com/sebastienrousseau/commons/compare/v0.0.3...v0.0.4

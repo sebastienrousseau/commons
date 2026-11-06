@@ -6,7 +6,7 @@
 //!
 //! The global [`ENGINE`] accepts [`LogEvent`]s via [`LockFreeEngine::ingest()`]
 //! using only atomic operations. A dedicated background thread drains events
-//! in batches of 64 and writes them through [`PlatformSink`](super::sink::PlatformSink).
+//! in batches of 64 and writes them through the [platform sink](crate::logging::sink::PlatformSink).
 //!
 //! **The Mutex is never locked on the hot path.** It exists solely for
 //! `shutdown()` to join the flusher thread.

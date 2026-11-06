@@ -4,7 +4,7 @@
 
 //! Bridge from the [`log`](https://docs.rs/log) crate facade into the logging engine.
 //!
-//! Installed automatically by [`init()`](super::init::init) unless
+//! Installed automatically by [logging init](crate::logging::init::init) unless
 //! you call `.without_log()` on the builder.
 
 use super::engine::ENGINE;

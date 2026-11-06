@@ -98,5 +98,5 @@ fn every_format_renders_without_panicking() {
 fn session_ids_are_monotonic() {
     let first = Log::info("one").session_id;
     let second = Log::info("two").session_id;
-    assert!(second > first, "{first} -> {second}");
+    assert!(second > first, "session ids must increase");
 }
