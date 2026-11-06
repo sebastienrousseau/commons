@@ -9,6 +9,27 @@ Note that under SemVer, every `0.0.x` release is its own compatibility
 range: `0.0.4` is not a drop-in for `0.0.3`. See
 [MSRV-AND-DEPRECATION.md](doc/MSRV-AND-DEPRECATION.md).
 
+## [v0.0.9] - 2026-11-06
+
+### Added
+
+- **`path::safe_join` and `path::is_within`** (new `path` feature, no
+  dependencies). `safe_join` joins an untrusted relative path under a
+  root without touching the filesystem, refusing absolute or
+  drive-prefixed input and any `..` that climbs above the root; names
+  that merely contain dots stay ordinary. `is_within` canonicalises
+  both paths, for checks that must see through symlinks. They replace
+  the six different traversal guards found across the maintainer's
+  crates, and are covered by unit tests and proptest properties.
+
+### Changed
+
+- **parking_lot stays on 0.12** for the 1.89 MSRV: 0.13 needs Rust
+  1.95 and only the deprecated `logging` module uses it, so Dependabot
+  now skips it.
+- `taiki-e/install-action` 2.90.0 in CI; `serial_test` 4 for the tests.
+- CI checks the `counter` and `path` features on their own.
+
 ## [v0.0.8] - 2026-11-06
 
 ### Deprecated
@@ -163,7 +184,8 @@ range: `0.0.4` is not a drop-in for `0.0.3`. See
 
 Initial release.
 
-[Unreleased]: https://github.com/sebastienrousseau/commons/compare/v0.0.8...HEAD
+[Unreleased]: https://github.com/sebastienrousseau/commons/compare/v0.0.9...HEAD
+[v0.0.9]: https://github.com/sebastienrousseau/commons/compare/v0.0.8...v0.0.9
 [v0.0.8]: https://github.com/sebastienrousseau/commons/compare/v0.0.7...v0.0.8
 [v0.0.7]: https://github.com/sebastienrousseau/commons/compare/v0.0.6...v0.0.7
 [v0.0.6]: https://github.com/sebastienrousseau/commons/compare/v0.0.5...v0.0.6

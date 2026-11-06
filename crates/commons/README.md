@@ -47,7 +47,7 @@
 
 ```toml
 [dependencies]
-euxis-commons = "0.0.8"
+euxis-commons = "0.0.9"
 ```
 
 The default feature set (`full`) enables every module. Most consumers
@@ -55,7 +55,7 @@ want less:
 
 ```toml
 # Just the error type and the validator: no logging stack, no serde.
-euxis-commons = { version = "0.0.8", default-features = false, features = ["error", "validation"] }
+euxis-commons = { version = "0.0.9", default-features = false, features = ["error", "validation"] }
 ```
 
 ### Deprecated in 0.0.8
@@ -131,6 +131,7 @@ cargo run --example retry       --all-features
 | `id` | `id` | Timestamp, hex, short and prefixed identifiers |
 | `env` | `env` | Typed environment variable access |
 | `fs` | `fs` | Filesystem helpers, WSL detection |
+| `path` | `path` | `safe_join` and `is_within`: keep untrusted relative paths under a root |
 
 ## Features
 

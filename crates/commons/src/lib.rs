@@ -34,7 +34,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! euxis-commons = { version = "0.0.8", default-features = false, features = ["error", "validation"] }
+//! euxis-commons = { version = "0.0.9", default-features = false, features = ["error", "validation"] }
 //! ```
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
