@@ -6,6 +6,9 @@
 //! cargo run --example validation --features validation
 //! ```
 
+// Exercises API deprecated in 0.0.8 until it is removed.
+#![allow(deprecated)]
+
 use commons::validation::{
     is_valid_email, is_valid_ipv4, is_valid_url, validate_length, validate_not_empty,
 };

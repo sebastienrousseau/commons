@@ -19,6 +19,11 @@
 //! let app_config: AppConfig = config.parse().unwrap();
 //! ```
 
+// Config, ConfigBuilder and FromTomlValue are deprecated in 0.0.8 and refer to one another here
+// (impls, constructors, tests). The deprecation is for callers outside
+// this module; it is removed together with them.
+#![allow(deprecated)]
+
 use serde::de::DeserializeOwned;
 use std::path::Path;
 
@@ -28,6 +33,10 @@ use std::path::Path;
 /// so repeated calls to [`get`](Config::get) and [`has_key`](Config::has_key)
 /// are cheap lookups rather than full re-parses.
 #[derive(Debug, Clone)]
+#[deprecated(
+    since = "0.0.8",
+    note = "no known user; deserialize with serde and toml directly; ConfigError stays"
+)]
 pub struct Config {
     /// Raw TOML content.
     content: String,
@@ -37,6 +46,11 @@ pub struct Config {
 
 impl Config {
     /// Create a new configuration from TOML string content.
+    ///
+    /// Invalid TOML gives an empty configuration: every [`get`](Config::get)
+    /// returns `None`. To have the error reported instead, load with
+    /// [`from_file`](Config::from_file) or deserialize with
+    /// [`parse`](Config::parse).
     ///
     /// # Arguments
     ///
@@ -70,7 +84,8 @@ impl Config {
     ///
     /// # Errors
     ///
-    /// Returns an error if the file cannot be read.
+    /// Returns [`ConfigError::FileRead`] if the file cannot be read, and
+    /// [`ConfigError::Parse`] if it is not valid TOML.
     ///
     /// # Example
     ///
@@ -80,10 +95,11 @@ impl Config {
     /// let config = Config::from_file("config.toml").unwrap();
     /// ```
     pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self, ConfigError> {
-        let content = std::fs::read_to_string(path.as_ref())
-            .map_err(|e| ConfigError::FileRead(format!("{}: {}", path.as_ref().display(), e)))?;
-        let parsed =
-            toml::from_str(&content).unwrap_or_else(|_| toml::Value::Table(toml::map::Map::new()));
+        let path = path.as_ref();
+        let content = std::fs::read_to_string(path)
+            .map_err(|e| ConfigError::FileRead(format!("{}: {}", path.display(), e)))?;
+        let parsed = toml::from_str(&content)
+            .map_err(|e| ConfigError::Parse(format!("{}: {}", path.display(), e)))?;
         Ok(Self { content, parsed })
     }
 
@@ -169,6 +185,10 @@ pub enum ConfigError {
 }
 
 /// Trait for converting TOML values to Rust types.
+#[deprecated(
+    since = "0.0.8",
+    note = "no known user; deserialize with serde and toml directly; ConfigError stays"
+)]
 pub trait FromTomlValue: Sized {
     /// Convert from a TOML value.
     fn from_toml_value(value: &toml::Value) -> Option<Self>;
@@ -214,6 +234,10 @@ impl<T: FromTomlValue> FromTomlValue for Vec<T> {
 
 /// Builder for creating configurations programmatically.
 #[derive(Debug, Default)]
+#[deprecated(
+    since = "0.0.8",
+    note = "no known user; deserialize with serde and toml directly; ConfigError stays"
+)]
 pub struct ConfigBuilder {
     values: toml::map::Map<String, toml::Value>,
 }
@@ -408,6 +432,16 @@ mod tests {
         // Should still work — has_key returns false, get returns None
         assert!(!config.has_key("anything"));
         assert_eq!(config.get::<String>("anything"), None);
+    }
+
+    #[test]
+    fn from_file_reports_malformed_toml() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("bad.toml");
+        std::fs::write(&path, "name = \"unterminated\nport = 8080\n").unwrap();
+        let err = Config::from_file(&path).unwrap_err();
+        assert!(matches!(err, ConfigError::Parse(_)), "{err:?}");
+        assert!(err.to_string().contains("bad.toml"), "{err}");
     }
 
     #[test]

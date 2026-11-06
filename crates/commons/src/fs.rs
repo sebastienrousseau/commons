@@ -16,6 +16,10 @@
 //! assert_eq!(wsl, Path::new("/mnt/c/Users/Name/file.txt"));
 //! ```
 
+// This module is deprecated in 0.0.8; its own code and tests use its
+// items. The warning is for callers; it goes when the module is removed.
+#![allow(deprecated)]
+
 use std::io;
 use std::path::{Path, PathBuf};
 

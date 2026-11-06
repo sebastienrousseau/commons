@@ -20,7 +20,7 @@ What this crate promises, and what it does not.
 **1.89.0**, declared as `rust-version` and enforced by a dedicated CI
 job so it cannot drift unnoticed.
 
-Raising it is deliberate: it happens in a minor release, the notes say
+Raising it is deliberate: it happens in an announced release, the notes say
 which feature required it, and the new floor is at least six months old
 at the time of release. Full detail in
 [`MSRV-AND-DEPRECATION.md`](MSRV-AND-DEPRECATION.md).
@@ -49,7 +49,7 @@ behind `#[doc(hidden)]`.
 ### Deprecation
 
 Two steps, never one: deprecate with a note naming the replacement,
-then remove no earlier than two minor releases later. Pre-1.0 this is a
+then remove no earlier than two releases later. Pre-1.0 this is a
 commitment rather than a SemVer guarantee.
 
 ## 3. Features
@@ -79,9 +79,9 @@ page rather than a public issue.
 
 ## 5. Supply chain
 
-Dependencies are minimal and optional. Seven of the ten modules pull
-nothing at all; `config` and `error` pull one well-known crate each;
-`logging` is the only substantial set.
+Dependencies are minimal and optional. `logging` is the only
+substantial set; `id` pulls `getrandom`, `config` pulls `serde`, `toml`
+and `thiserror`, `error` pulls `thiserror`, and the rest pull nothing.
 
 Publishing uses **crates.io Trusted Publishing**: the release workflow
 authenticates over OIDC and no long-lived registry token exists in the

@@ -6,6 +6,9 @@
 //! cargo run --example identifiers --features id
 //! ```
 
+// Exercises API deprecated in 0.0.8 until it is removed.
+#![allow(deprecated)]
+
 use commons::id::{
     IdFormat, generate_id, generate_prefixed_id, generate_short_id, generate_timestamp_id,
 };

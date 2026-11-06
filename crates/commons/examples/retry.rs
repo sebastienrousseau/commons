@@ -6,6 +6,9 @@
 //! cargo run --example retry --features retry
 //! ```
 
+// Exercises API deprecated in 0.0.8 until it is removed.
+#![allow(deprecated)]
+
 use commons::retry::{BackoffStrategy, RetryConfig};
 use std::time::Duration;
 

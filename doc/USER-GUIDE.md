@@ -29,10 +29,10 @@ them, which is convenient and rarely what a library wants:
 
 ```toml
 # Everything.
-euxis-commons = "0.0.4"
+euxis-commons = "0.0.8"
 
 # Just what you use.
-euxis-commons = { version = "0.0.4", default-features = false, features = ["validation", "retry"] }
+euxis-commons = { version = "0.0.8", default-features = false, features = ["error", "validation"] }
 ```
 
 The crate is imported as `commons`, not `euxis_commons`:

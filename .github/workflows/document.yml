@@ -1,11 +1,17 @@
 name: 🧪 Document
 
+# Builds the API docs and deploys them to GitHub Pages with the official
+# Pages actions (AGENTS.md section 7.1.3). The site is rebuilt from source
+# on every push to main; nothing is pushed to a branch. The custom domain
+# (commons.euxis.co) lives in the repository's Pages settings.
+
 on:
   push:
     branches: [main]
+  workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: pages
@@ -16,29 +22,35 @@ jobs:
     name: Generate Documentation
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@nightly
-      - uses: Swatinem/rust-cache@v2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master
+        with:
+          toolchain: nightly
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
       - name: Generate docs
         run: |
           RUSTDOCFLAGS="--cfg docsrs" cargo doc --no-deps --all-features --workspace
           echo '<html><head><meta http-equiv="refresh" content="0; url=commons/index.html"></head><body></body></html>' > target/doc/index.html
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
+      - name: Configure Pages
+        uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
+      - name: Upload site
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./target/doc
-          commit_message: "docs: deploy documentation [skip ci]"
-          cname: commons.euxis.co
+          path: target/doc
 
-  # Deploys the gh-pages branch just published, with GitHub Actions
-  # (see pages.yml).
-  pages:
+  deploy:
     name: Deploy Pages
     needs: doc
-    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
     permissions:
-      contents: read
       pages: write
       id-token: write
-    uses: ./.github/workflows/pages.yml
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
