@@ -9,6 +9,48 @@ Note that under SemVer, every `0.0.x` release is its own compatibility
 range: `0.0.4` is not a drop-in for `0.0.3`. See
 [MSRV-AND-DEPRECATION.md](doc/MSRV-AND-DEPRECATION.md).
 
+## [v0.0.8] - 2026-11-06
+
+### Deprecated
+
+- **Most of the crate**, after a survey of the maintainer's 44 Rust
+  repositories found one consumer (rlg) using five items. `logging`
+  (use rlg), `time`, `collections`, `retry`, `env` and `fs` are
+  deprecated whole; so are `Config`, `ConfigBuilder` and
+  `FromTomlValue`, every `id` function except `generate_random_hex`,
+  and every validator except `Validator` and `validate_not_empty`.
+  Each warning names its replacement, and the README lists them. Removal
+  comes no earlier than two releases from now.
+
+### Security
+
+- **IDs come from the OS random number generator.** They were seeded
+  from fixed-key hashing of the time, pid and thread, so two processes
+  with the same pid (containers running as pid 1) produced the same
+  IDs in the same millisecond, and anyone knowing the time could
+  predict them. rlg uses `generate_random_hex` for trace IDs. Short
+  IDs also lose a 25% bias towards their first eight characters.
+- **`EnvError` no longer prints the rejected value** in `Display` or
+  `Debug`, so a mistyped secret stays out of logs and panic messages.
+- **CI and publishing**: every action is pinned to a commit SHA and
+  kept current by Dependabot, checkouts drop their credentials,
+  `cargo deny` runs in CI, and publishing waits for tests, `cargo
+  audit` and `cargo deny` on the tag, with no build cache in the job
+  that can publish.
+
+### Fixed
+
+- `time::parse_duration` returns an error instead of panicking on
+  negative, NaN, infinite or huge values (`"-1s"`, `"1e30s"`), and
+  instead of overflowing on `"999999999999999999d"`.
+- `Config::from_file` reports malformed TOML as `ConfigError::Parse`
+  instead of loading an empty configuration.
+- The docs no longer call `config` "layered", list the right
+  dependencies per feature, and state the MSRV and deprecation rules
+  in terms of releases this crate actually makes.
+- The API docs deploy to GitHub Pages straight from the build, without
+  a `gh-pages` branch.
+
 ## [v0.0.7] - 2026-11-06
 
 ### Changed
@@ -121,7 +163,8 @@ range: `0.0.4` is not a drop-in for `0.0.3`. See
 
 Initial release.
 
-[Unreleased]: https://github.com/sebastienrousseau/commons/compare/v0.0.7...HEAD
+[Unreleased]: https://github.com/sebastienrousseau/commons/compare/v0.0.8...HEAD
+[v0.0.8]: https://github.com/sebastienrousseau/commons/compare/v0.0.7...v0.0.8
 [v0.0.7]: https://github.com/sebastienrousseau/commons/compare/v0.0.6...v0.0.7
 [v0.0.6]: https://github.com/sebastienrousseau/commons/compare/v0.0.5...v0.0.6
 [v0.0.5]: https://github.com/sebastienrousseau/commons/compare/v0.0.4...v0.0.5
