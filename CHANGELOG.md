@@ -121,7 +121,7 @@ range: `0.0.4` is not a drop-in for `0.0.3`. See
 
 Initial release.
 
-[Unreleased]: https://github.com/sebastienrousseau/commons/compare/v0.0.6...HEAD
+[Unreleased]: https://github.com/sebastienrousseau/commons/compare/v0.0.7...HEAD
 [v0.0.7]: https://github.com/sebastienrousseau/commons/compare/v0.0.6...v0.0.7
 [v0.0.6]: https://github.com/sebastienrousseau/commons/compare/v0.0.5...v0.0.6
 [v0.0.5]: https://github.com/sebastienrousseau/commons/compare/v0.0.4...v0.0.5
