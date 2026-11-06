@@ -31,8 +31,9 @@ jobs:
       # On a dispatch, github.ref is the branch the workflow was started
       # from, not the tag. Checking out the tag explicitly means the
       # version that is validated is the version that gets published.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          persist-credentials: false
           ref: ${{ inputs.tag || github.ref }}
 
       - name: Check tag matches Cargo.toml version
@@ -52,9 +53,34 @@ jobs:
           fi
           echo "Tag ${TAG} matches Cargo.toml version ${CARGO_VERSION}"
 
+  # Tests and supply-chain checks on the exact tag, in a job with no
+  # id-token permission: dependency build scripts run here, so they never
+  # share a job with the credential that can publish.
+  verify:
+    name: Verify Tag
+    needs: [validate]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ inputs.tag || github.ref }}
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master
+        with:
+          toolchain: stable
+      - uses: taiki-e/install-action@68a389c788b2cd04016ce8c80ee23b80d2ab3d68 # v2.88.1
+        with:
+          tool: cargo-audit,cargo-deny
+      - name: Test
+        run: cargo test --workspace --all-features
+      - name: Audit and deny
+        run: |
+          cargo audit
+          cargo deny check
+
   publish:
     name: Publish to Crates.io
-    needs: [validate]
+    needs: [validate, verify]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -63,18 +89,22 @@ jobs:
     steps:
       # Same tag as validate. Without this a dispatch would package
       # whatever is on the default branch under the tag's version.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          persist-credentials: false
           ref: ${{ inputs.tag || github.ref }}
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master
+        with:
+          toolchain: stable
+      # No rust-cache here: a cache restored into the job that holds
+      # id-token: write would let a poisoned cache reach the publish.
       # Trusted publishing: swaps this job's GitHub OIDC identity for a
       # temporary crates.io token, revoked by the action's post step when
       # the job ends. Needs a trusted publisher on crates.io for this
       # crate (repo + release.yml).
       - name: Authenticate with crates.io
         id: auth
-        uses: rust-lang/crates-io-auth-action@v1
+        uses: rust-lang/crates-io-auth-action@3268eb413133e2960fa4ae0e963ca76380c54cd9 # v1.0.6
 
       - name: Publish
         env:
