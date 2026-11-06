@@ -271,12 +271,14 @@ mod tests {
     use std::collections::HashSet;
 
     #[test]
+    #[cfg_attr(miri, ignore = "statistical sample; hours under Miri")]
     fn random_hex_ids_do_not_repeat() {
         let ids: HashSet<String> = (0..100_000).map(|_| generate_random_hex()).collect();
         assert_eq!(ids.len(), 100_000);
     }
 
     #[test]
+    #[cfg_attr(miri, ignore = "statistical sample; hours under Miri")]
     fn random_bytes_cover_every_value() {
         // 64 KiB of OS randomness: each byte value is expected 256 times,
         // so a missing value means the source is broken, not unlucky.
@@ -292,6 +294,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg_attr(miri, ignore = "statistical sample; hours under Miri")]
     fn short_ids_use_every_base62_character() {
         let mut counts = std::collections::HashMap::new();
         for _ in 0..20_000 {
