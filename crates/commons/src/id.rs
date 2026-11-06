@@ -20,9 +20,6 @@ use std::time::{SystemTime, UNIX_EPOCH};
 /// Counter for timestamp-based ID uniqueness within the same millisecond.
 static TIMESTAMP_COUNTER: Counter = Counter::new(0);
 
-/// Counter for entropy seeding in random byte generation.
-static ENTROPY_COUNTER: Counter = Counter::new(0);
-
 /// ID format options.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum IdFormat {
@@ -79,7 +76,15 @@ pub fn generate_timestamp_id() -> String {
     format!("{timestamp:013}{counter:07}")
 }
 
-/// Generate a random hexadecimal ID (32 characters).
+/// Generate a random hexadecimal ID (32 characters, 128 random bits).
+///
+/// The bits come from the operating system's random number generator, so
+/// IDs are unique with overwhelming probability across processes and
+/// machines. They are suitable as W3C Trace Context IDs.
+///
+/// # Panics
+///
+/// Panics if the operating system's random number generator fails.
 #[must_use]
 pub fn generate_random_hex() -> String {
     let mut bytes = [0u8; 16];
@@ -91,22 +96,40 @@ pub fn generate_random_hex() -> String {
 }
 
 /// Generate a short random ID (12 characters, base62).
+///
+/// Each character is drawn uniformly from `[0-9A-Za-z]` (about 71 bits in
+/// all) by rejection sampling, so no character is more likely than another.
+///
+/// # Panics
+///
+/// Panics if the operating system's random number generator fails.
 #[must_use]
 pub fn generate_short_id() -> String {
     const CHARS: &[u8] = b"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-    let mut bytes = [0u8; 12];
-    fill_random_bytes(&mut bytes);
-
-    bytes
-        .iter()
-        .map(|b| CHARS[(*b as usize) % CHARS.len()] as char)
-        .collect()
+    // 248 = 4 * 62: bytes at or above it would favour the first characters.
+    const LIMIT: u8 = 248;
+    let mut id = String::with_capacity(12);
+    let mut buf = [0u8; 16];
+    while id.len() < 12 {
+        fill_random_bytes(&mut buf);
+        for &b in buf.iter().filter(|&&b| b < LIMIT) {
+            if id.len() == 12 {
+                break;
+            }
+            id.push(CHARS[usize::from(b) % CHARS.len()] as char);
+        }
+    }
+    id
 }
 
-/// Generate a UUID v4-like string.
+/// Generate a random UUID version 4 string.
 ///
-/// Note: This is not a cryptographically secure UUID.
-/// For production use, consider the `uuid` crate.
+/// The 122 random bits come from the operating system's random number
+/// generator.
+///
+/// # Panics
+///
+/// Panics if the operating system's random number generator fails.
 #[must_use]
 pub fn generate_uuid_like() -> String {
     let mut bytes = [0u8; 16];
@@ -147,32 +170,14 @@ pub fn current_timestamp_millis() -> u64 {
         .as_millis() as u64
 }
 
-/// Fill a byte slice with pseudo-random values.
+/// Fill a byte slice from the operating system's random number generator.
+///
+/// The previous implementation seeded a xorshift from the time, a counter,
+/// the process id and the thread id through a fixed-key hasher, so two
+/// processes with the same pid (for example containers running as pid 1)
+/// produced the same IDs in the same millisecond.
 fn fill_random_bytes(bytes: &mut [u8]) {
-    use std::collections::hash_map::DefaultHasher;
-    use std::hash::{Hash, Hasher};
-
-    let counter = ENTROPY_COUNTER.fetch_add(1, Ordering::SeqCst);
-    let timestamp = current_timestamp_millis();
-
-    // Use multiple sources of entropy
-    let mut hasher = DefaultHasher::new();
-    timestamp.hash(&mut hasher);
-    counter.hash(&mut hasher);
-    std::process::id().hash(&mut hasher);
-    std::thread::current().id().hash(&mut hasher);
-
-    let mut seed = hasher.finish();
-
-    // Simple xorshift for pseudo-randomness
-    for byte in bytes.iter_mut() {
-        seed ^= seed << 13;
-        seed ^= seed >> 7;
-        seed ^= seed << 17;
-        *byte = (seed & 0xff) as u8;
-        // Mix in counter for each byte
-        seed = seed.wrapping_add(counter);
-    }
+    getrandom::fill(bytes).expect("the operating system's random number generator failed");
 }
 
 /// ID generator with configuration.
@@ -227,6 +232,47 @@ impl Default for IdGenerator {
 mod tests {
     use super::*;
     use std::collections::HashSet;
+
+    #[test]
+    fn random_hex_ids_do_not_repeat() {
+        let ids: HashSet<String> = (0..100_000).map(|_| generate_random_hex()).collect();
+        assert_eq!(ids.len(), 100_000);
+    }
+
+    #[test]
+    fn random_bytes_cover_every_value() {
+        // 64 KiB of OS randomness: each byte value is expected 256 times,
+        // so a missing value means the source is broken, not unlucky.
+        let mut seen = [false; 256];
+        let mut buf = [0u8; 4096];
+        for _ in 0..16 {
+            fill_random_bytes(&mut buf);
+            for &b in &buf {
+                seen[usize::from(b)] = true;
+            }
+        }
+        assert!(seen.iter().all(|&s| s), "some byte values never appeared");
+    }
+
+    #[test]
+    fn short_ids_use_every_base62_character() {
+        let mut counts = std::collections::HashMap::new();
+        for _ in 0..20_000 {
+            for c in generate_short_id().chars() {
+                *counts.entry(c).or_insert(0u32) += 1;
+            }
+        }
+        // 240,000 characters over 62 symbols: about 3,871 each.
+        assert_eq!(counts.len(), 62);
+        let (min, max) = (
+            counts.values().min().unwrap(),
+            counts.values().max().unwrap(),
+        );
+        assert!(
+            *min > 3_400 && *max < 4_350,
+            "skewed base62 distribution: {min}..{max}"
+        );
+    }
 
     #[test]
     fn test_timestamp_id_format() {

@@ -72,7 +72,7 @@ use commons::retry::{BackoffStrategy, RetryConfig};
 use commons::validation::is_valid_email;
 use std::time::Duration;
 
-// Identifiers — monotonic, collision-free within a millisecond.
+// Identifiers: a prefix plus 12 random base62 characters from the OS RNG.
 let order = generate_prefixed_id("order");
 
 // Validation — `is_valid_*` answers yes/no, `validate_*` returns the
