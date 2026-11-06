@@ -47,16 +47,36 @@
 
 ```toml
 [dependencies]
-euxis-commons = "0.0.7"
+euxis-commons = "0.0.8"
 ```
 
 The default feature set (`full`) enables every module. Most consumers
 want less:
 
 ```toml
-# Just validation and retries — no logging stack, no serde.
-euxis-commons = { version = "0.0.7", default-features = false, features = ["validation", "retry"] }
+# Just the error type and the validator: no logging stack, no serde.
+euxis-commons = { version = "0.0.8", default-features = false, features = ["error", "validation"] }
 ```
+
+### Deprecated in 0.0.8
+
+Most of the crate is deprecated and will be removed in a later release.
+A survey of the maintainer's crates found that only `error`, `counter`,
+`config::ConfigError`, `id::generate_random_hex` and
+`validation::{Validator, validate_not_empty}` have users; everything else
+warns and names its replacement:
+
+| Deprecated | Use instead |
+|---|---|
+| `logging` | the [`rlg`](https://crates.io/crates/rlg) crate |
+| `time` | `std::time`, `time`, `humantime` |
+| `collections` | `lru`, `quick_cache` |
+| `retry` | `backon`, `backoff` |
+| `env` | `std::env`, `envy` |
+| `fs` | `std::fs`, `dirs` |
+| `config::{Config, ConfigBuilder, FromTomlValue}` | `serde` with `toml` |
+| `id` (all but `generate_random_hex`) | `uuid` |
+| `validation` (all but `Validator`, `validate_not_empty`) | `url`, `email_address`, `semver`, `std::net` |
 
 The library is imported as `commons`:
 
@@ -101,7 +121,7 @@ cargo run --example retry       --all-features
 
 | Module | Feature | What it covers |
 |---|---|---|
-| `config` | `config` | Layered configuration loading |
+| `config` | `config` | `ConfigError`; the TOML `Config` loader is deprecated |
 | `error` | `error` | Shared error type and result alias |
 | `logging` | `logging` | Lock-free engine, sinks, twelve wire formats |
 | `time` | `time` | Timestamps |
@@ -132,9 +152,9 @@ logging-miette        ─ logging + miette
 logging-tracing-layer ─ logging + tracing-subscriber
 ```
 
-`logging` is the only feature with a substantial dependency set. The
-seven utility modules pull nothing; `config` and `error` pull one
-well-known crate each.
+`logging` is the only feature with a substantial dependency set. `id`
+pulls `getrandom`, `config` pulls `serde`, `toml` and `thiserror`,
+`error` pulls `thiserror`, and the other utility modules pull nothing.
 
 ## Logging
 
@@ -227,8 +247,8 @@ The crate builds on targets without 64-bit atomics, such as
 
 ## Minimum supported Rust version
 
-**1.89.0**, enforced by a dedicated CI job. Raising it happens in a
-minor release with a documented reason — see
+**1.89.0**, enforced by a dedicated CI job. Raising it happens only in
+a release whose notes give the reason — see
 [`doc/MSRV-AND-DEPRECATION.md`](doc/MSRV-AND-DEPRECATION.md).
 
 ## Licence

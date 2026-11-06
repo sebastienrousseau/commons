@@ -12,7 +12,7 @@ unnoticed.
 Raising it is a deliberate act, not a side effect of using a new
 language feature:
 
-- it happens in a minor release, never a patch,
+- it happens only in a release whose notes announce it,
 - the release notes say which feature required it and why the
   workaround was worse,
 - the new floor is at least six months old at the time of release.
@@ -24,7 +24,7 @@ that requirement sits comfortably below the floor, so it cost nothing.
 ## Editions
 
 The crate is on the 2024 edition. Edition upgrades follow the same
-rule as MSRV bumps: minor release, documented rationale.
+rule as MSRV bumps: an announced release with a documented rationale.
 
 ## Deprecation
 
@@ -32,7 +32,7 @@ Public items are removed in two steps.
 
 1. **Deprecate.** The item gains `#[deprecated(since = "…", note =
    "…")]` with a note naming the replacement. It keeps working.
-2. **Remove.** No earlier than two minor releases later, and only in a
+2. **Remove.** No earlier than two releases later, and only in a
    release whose notes list it.
 
 While the crate is pre-1.0 this policy is a commitment rather than a

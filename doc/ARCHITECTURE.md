@@ -14,7 +14,7 @@ crates/
 └── commons/              # the library — public API
     ├── src/
     │   ├── lib.rs        # public re-exports + prelude
-    │   ├── config.rs     # layered configuration loading
+    │   ├── config.rs     # ConfigError (the TOML loader is deprecated)
     │   ├── error.rs      # shared error type and result alias
     │   ├── env.rs        # environment inspection
     │   ├── fs.rs         # filesystem helpers, WSL detection
