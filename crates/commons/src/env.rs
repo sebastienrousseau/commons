@@ -26,7 +26,11 @@ use std::str::FromStr;
 /// via [`std::any::type_name`], which is not guaranteed to be stable across
 /// compiler versions. It is intended for human-readable diagnostics only —
 /// do not match on its string value programmatically.
-#[derive(Debug, Clone, PartialEq, Eq)]
+///
+/// The rejected `value` is kept for callers that need it, but neither
+/// `Display` nor `Debug` prints it: environment variables often hold
+/// secrets, and errors end up in logs.
+#[derive(Clone, PartialEq, Eq)]
 #[allow(missing_docs)]
 pub enum EnvError {
     /// Variable is not set.
@@ -47,14 +51,25 @@ impl std::fmt::Display for EnvError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::NotSet(var) => write!(f, "Environment variable not set: {var}"),
-            Self::ParseError {
-                var,
-                value,
-                expected,
-            } => {
-                write!(f, "Cannot parse {var}={value} as {expected}")
+            Self::ParseError { var, expected, .. } => {
+                write!(f, "Cannot parse {var} as {expected}")
             }
             Self::Empty(var) => write!(f, "Environment variable is empty: {var}"),
+        }
+    }
+}
+
+impl std::fmt::Debug for EnvError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::NotSet(var) => f.debug_tuple("NotSet").field(var).finish(),
+            Self::ParseError { var, expected, .. } => f
+                .debug_struct("ParseError")
+                .field("var", var)
+                .field("value", &"<redacted>")
+                .field("expected", expected)
+                .finish(),
+            Self::Empty(var) => f.debug_tuple("Empty").field(var).finish(),
         }
     }
 }
@@ -593,7 +608,19 @@ mod tests {
             value: "abc".to_string(),
             expected: "u16".to_string(),
         };
-        assert_eq!(err.to_string(), "Cannot parse PORT=abc as u16");
+        assert_eq!(err.to_string(), "Cannot parse PORT as u16");
+    }
+
+    #[test]
+    fn parse_error_never_prints_the_value() {
+        let err = EnvError::ParseError {
+            var: "API_TOKEN".to_string(),
+            value: "hunter2-secret".to_string(),
+            expected: "u16".to_string(),
+        };
+        assert!(!err.to_string().contains("hunter2"), "{err}");
+        assert!(!format!("{err:?}").contains("hunter2"), "{err:?}");
+        assert!(format!("{err:?}").contains("API_TOKEN"), "{err:?}");
     }
 
     #[test]
