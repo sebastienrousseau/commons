@@ -63,7 +63,7 @@ fs = []
 # Existing
 thiserror = { version = "2.0", optional = true }
 serde = { version = "1.0", features = ["derive"], optional = true }
-toml = { version = "0.8", optional = true }
+toml = { version = "1.0", optional = true }
 
 # Logging: core engine
 crossbeam-queue = { version = "0.3.12", optional = true }
