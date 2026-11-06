@@ -71,12 +71,18 @@ pub fn parse_duration(s: &str) -> Result<Duration, String> {
 
     let mut total = Duration::ZERO;
     for chunk in chunks {
-        total += parse_single_duration(chunk)?;
+        total = total
+            .checked_add(parse_single_duration(chunk)?)
+            .ok_or_else(|| format!("Duration overflows: {s}"))?;
     }
     Ok(total)
 }
 
 /// Parse a single duration chunk such as `"100ms"` or `"2h"`.
+///
+/// Every value is checked: negative, non-finite or too-large inputs return
+/// an error instead of panicking (`Duration::from_secs_f64`) or wrapping
+/// (`num * 86400` in a release build without overflow checks).
 fn parse_single_duration(s: &str) -> Result<Duration, String> {
     if let Some(num_str) = s.strip_suffix("ms") {
         let num: u64 = num_str
@@ -87,34 +93,61 @@ fn parse_single_duration(s: &str) -> Result<Duration, String> {
         let num: f64 = num_str
             .parse()
             .map_err(|_| format!("Invalid seconds value: {num_str}"))?;
-        Ok(Duration::from_secs_f64(num))
+        fractional_secs(num, s)
     } else if let Some(num_str) = s.strip_suffix('m') {
-        let num: u64 = num_str
-            .parse()
-            .map_err(|_| format!("Invalid minutes value: {num_str}"))?;
-        Ok(Duration::from_secs(num * 60))
+        whole_units(num_str, 60, "minutes")
     } else if let Some(num_str) = s.strip_suffix('h') {
-        let num: u64 = num_str
-            .parse()
-            .map_err(|_| format!("Invalid hours value: {num_str}"))?;
-        Ok(Duration::from_secs(num * 3600))
+        whole_units(num_str, 3600, "hours")
     } else if let Some(num_str) = s.strip_suffix('d') {
-        let num: u64 = num_str
-            .parse()
-            .map_err(|_| format!("Invalid days value: {num_str}"))?;
-        Ok(Duration::from_secs(num * 86400))
+        whole_units(num_str, 86_400, "days")
     } else {
-        // Bare number — treat as fractional seconds
+        // Bare number: fractional seconds.
         let num: f64 = s
             .parse()
             .map_err(|_| format!("Unknown duration chunk: {s}"))?;
-        Ok(Duration::from_secs_f64(num))
+        fractional_secs(num, s)
     }
+}
+
+/// `num` units of `secs_per_unit` seconds, or an error on overflow.
+fn whole_units(num_str: &str, secs_per_unit: u64, unit: &str) -> Result<Duration, String> {
+    let num: u64 = num_str
+        .parse()
+        .map_err(|_| format!("Invalid {unit} value: {num_str}"))?;
+    num.checked_mul(secs_per_unit)
+        .map(Duration::from_secs)
+        .ok_or_else(|| format!("Duration overflows: {num_str} {unit}"))
+}
+
+/// Fractional seconds, rejecting negative, NaN, infinite and too-large values.
+fn fractional_secs(num: f64, chunk: &str) -> Result<Duration, String> {
+    Duration::try_from_secs_f64(num).map_err(|_| format!("Duration out of range: {chunk}"))
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn parse_duration_rejects_out_of_range_input() {
+        for input in [
+            "-1s",
+            "NaN",
+            "nans",
+            "infs",
+            "1e30s",
+            "-5",
+            "999999999999999999d",
+            "99999999999999999999h",
+            "18446744073709551615m",
+            "18446744073709551615s 18446744073709551615s",
+        ] {
+            assert!(
+                std::panic::catch_unwind(|| parse_duration(input)).is_ok_and(|r| r.is_err()),
+                "{input:?} should be rejected without panicking"
+            );
+        }
+    }
 
     #[test]
     fn test_parse_duration() {
