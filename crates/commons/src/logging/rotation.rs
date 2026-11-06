@@ -4,7 +4,7 @@
 
 //! Log rotation policies: size, time, date, and count-based.
 //!
-//! Wrap a file sink with [`RotatingFile`] to enforce automatic rotation.
+//! Wrap a file sink with a [rotating file](crate::logging::rotation::RotatingFile) to enforce automatic rotation.
 //! On rotation, the current file is renamed with a timestamp suffix and
 //! a fresh file is opened at the original path.
 
