@@ -33,7 +33,7 @@ path = "src/lib.rs"
 
 [features]
 default = ["full"]
-full = ["config", "error", "logging", "time", "collections", "validation", "retry", "id", "env", "fs", "counter"]
+full = ["config", "error", "logging", "time", "collections", "validation", "retry", "id", "env", "fs", "counter", "path"]
 # `config` derives thiserror::Error, so it needs the `error` feature
 # that pulls that dependency in.
 config = ["serde", "toml", "error"]
@@ -58,6 +58,8 @@ retry = []
 id = ["dep:getrandom"]
 env = []
 fs = []
+# Path containment (safe_join, is_within); no dependencies.
+path = []
 
 [dependencies]
 # Existing
@@ -91,6 +93,7 @@ tracing-subscriber = { version = "0.3", default-features = false, features = ["r
 [dev-dependencies]
 tempfile = "3.15"
 serial_test = "4"
+proptest = "1"
 criterion = "0.8"
 
 [[bench]]
