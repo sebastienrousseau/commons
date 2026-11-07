@@ -55,7 +55,7 @@ examples:
 # baseline.
 features:
 	cargo check --no-default-features
-	@for f in config error logging time collections validation retry id env fs counter; do \
+	@for f in config error logging time collections validation retry id env fs counter path; do \
 		echo "── $$f"; \
 		cargo check --no-default-features --features "$$f" || exit 1; \
 	done

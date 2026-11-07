@@ -34,7 +34,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! euxis-commons = { version = "0.0.8", default-features = false, features = ["error", "validation"] }
+//! euxis-commons = { version = "0.0.9", default-features = false, features = ["error", "validation"] }
 //! ```
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
@@ -107,6 +107,11 @@ pub mod id;
 )]
 pub mod env;
 
+/// Path containment: join untrusted relative paths under a root.
+#[cfg(feature = "path")]
+#[cfg_attr(docsrs, doc(cfg(feature = "path")))]
+pub mod path;
+
 #[cfg(feature = "fs")]
 #[cfg_attr(docsrs, doc(cfg(feature = "fs")))]
 #[deprecated(
@@ -170,6 +175,9 @@ pub mod prelude {
 
     #[cfg(feature = "env")]
     pub use crate::env::{get_env, get_env_or, is_development, is_production, require_env};
+
+    #[cfg(feature = "path")]
+    pub use crate::path::{PathError, is_within, safe_join};
 
     #[cfg(feature = "fs")]
     pub use crate::fs::{ensure_dir, from_wsl_path, is_wsl, resolve_path, to_wsl_path};
